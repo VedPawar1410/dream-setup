@@ -1,0 +1,47 @@
+:root {
+  --bg: #1b1622;
+  --ink: #f4eefc;
+  --ink-dim: #a99bbd;
+  --accent: #b18cff;
+
+  color-scheme: dark;
+  font-family: ui-rounded, 'SF Pro Rounded', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* The HUD sits over the canvas. It ignores the pointer except on its own controls,
+   so clicks fall through to the 3D scene. */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  padding: 28px 32px;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+}
