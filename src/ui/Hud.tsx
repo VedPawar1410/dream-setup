@@ -9,6 +9,7 @@ import CatalogPanel from './CatalogPanel'
 import Inspector from './Inspector'
 import ModeSwitch from './ModeSwitch'
 import SelectionBar from './SelectionBar'
+import WeatherDock from './WeatherDock'
 
 gsap.registerPlugin(SplitText)
 
@@ -19,6 +20,7 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
     { keys: ['Scroll'], label: 'Zoom' },
     { keys: ['W', 'A', 'S', 'D'], label: 'Move' },
     { keys: ['Q', 'E'], label: 'Turn' },
+    { keys: ['Click lamp'], label: 'Switch' },
     { keys: ['C'], label: 'Decorate' },
     { keys: ['B'], label: 'Blueprint' },
   ],
@@ -53,7 +55,7 @@ export default function Hud() {
         .timeline({ paused: true, delay: 0.5, onComplete: () => void (introDone.current = true) })
         .from(split.chars, { yPercent: 110, duration: 0.9, ease: 'power4.out', stagger: 0.035 })
         .from('.subtitle', { opacity: 0, y: 8, duration: 0.6, ease: 'power2.out' }, '-=0.5')
-        .from('.mode-switch', { opacity: 0, y: -12, duration: 0.6, ease: 'power3.out' }, '-=0.4')
+        .from('.mode-switch, .weather-dock', { opacity: 0, y: -12, duration: 0.6, ease: 'power3.out', stagger: 0.1 }, '-=0.4')
         // These land as the camera settles (the camera intro takes ~2.8s)
         .from('.dock > *', { opacity: 0, y: 20, duration: 0.7, ease: 'back.out(1.6)', stagger: 0.08 }, 1.9)
       // Paused timelines still apply their "from" values, so the HUD stays hidden until then.
@@ -85,6 +87,7 @@ export default function Hud() {
           <p className="subtitle">Your room</p>
         </div>
         <ModeSwitch />
+        <WeatherDock />
       </header>
 
       <BlueprintPanel />

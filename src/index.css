@@ -1038,3 +1038,120 @@ kbd {
     max-height: 38%;
   }
 }
+
+/* ---------- Phase 5: weather dock ---------- */
+
+.weather-dock {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.weather-switch {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+}
+
+.weather-btn {
+  position: relative;
+  width: 36px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition:
+    color 0.25s,
+    transform 0.3s var(--ease-out);
+}
+
+.weather-btn:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.weather-btn[aria-checked='true'] {
+  color: var(--ink);
+}
+
+.weather-btn svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rgb-btn {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    color 0.25s,
+    border-color 0.25s,
+    transform 0.3s var(--ease-out);
+}
+
+.rgb-btn:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+/* When on, the label itself cycles through the rainbow */
+.rgb-btn.on {
+  color: transparent;
+  border-color: rgb(255 255 255 / 0.3);
+  background-image: linear-gradient(90deg, #ff5f6d, #ffc371, #7cffcb, #6aa8ff, #c86bff, #ff5f6d);
+  background-size: 300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: rgb-slide 3s linear infinite;
+}
+
+@keyframes rgb-slide {
+  to {
+    background-position: 300% 0;
+  }
+}
+
+.weather-btn:focus-visible,
+.rgb-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sel-btn.lit svg {
+  stroke: #ffd27a;
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    grid-template-columns: 1fr auto;
+  }
+  .weather-dock {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}

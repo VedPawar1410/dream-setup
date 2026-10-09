@@ -70,6 +70,7 @@ export function instantiate(proto: Prototype): Object3D {
     const c = mat.clone() as MeshStandardMaterial
     // Remember what glowed originally (RGB, screens) before any highlight tints the emissive
     c.userData.glow = c.emissive && c.emissive.getHex() !== 0 ? c.emissive.clone() : null
+    c.userData.glowIntensity = c.emissiveIntensity // full brightness, for power on/off
     return c
   }
   clone.traverse((o) => {

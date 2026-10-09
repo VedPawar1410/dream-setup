@@ -4,6 +4,7 @@ import CameraRig from './CameraRig'
 import Lighting from './Lighting'
 import PostFX from './PostFX'
 import RoomShell from './RoomShell'
+import Weather from './Weather'
 
 export default function Experience() {
   return (
@@ -11,6 +12,7 @@ export default function Experience() {
       <Background />
       <Lighting />
       <RoomShell />
+      <Weather />
       <Blueprint />
       <CameraRig />
       <PostFX />

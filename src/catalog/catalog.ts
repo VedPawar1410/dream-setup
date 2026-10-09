@@ -1,6 +1,6 @@
 export type Mount = 'floor' | 'surface' | 'wall' | 'ceiling'
 export type Category = 'desk' | 'seating' | 'tables' | 'beds' | 'storage' | 'lighting' | 'decor' | 'plants'
-export type ProceduralId = 'pcTower' | 'monitorWide' | 'deskMat' | 'wallShelf' | 'posterSunset' | 'posterOcean' | 'posterShapes'
+export type ProceduralId = 'pcTower' | 'monitorWide' | 'deskMat' | 'wallShelf' | 'posterSunset' | 'posterOcean' | 'posterShapes' | 'ledStrip'
 
 export type CatalogItem = {
   id: string
@@ -12,6 +12,10 @@ export type CatalogItem = {
   surface?: boolean
   /** Flat things (rugs) that never block other items. */
   flat?: boolean
+  /** Lamps: a real light at this fraction of the item's height. */
+  light?: { y: number; intensity: number; distance: number }
+  /** Electronics whose glowing parts switch off with the power. */
+  glows?: boolean
   model: { kind: 'glb'; file: string; scale: number; yaw: number } | { kind: 'procedural'; build: ProceduralId }
 }
 
@@ -29,27 +33,30 @@ export const CATEGORIES: { id: Category; label: string }[] = [
 // Kenney's furniture is modelled at roughly half scale: ×1.9 puts a desk top at a real 73 cm.
 const K = 1.9
 
-type Opts = { surface?: boolean; flat?: boolean; scale?: number; yaw?: number }
+type Opts = Pick<CatalogItem, 'surface' | 'flat' | 'light' | 'glows'> & { scale?: number; yaw?: number }
 
 function kenney(id: string, name: string, category: Category, mount: Mount, o: Opts = {}): CatalogItem {
-  return { id, name, category, mount, surface: o.surface, flat: o.flat, model: { kind: 'glb', file: `kenney/${id}.glb`, scale: o.scale ?? K, yaw: o.yaw ?? 0 } }
+  return { id, name, category, mount, surface: o.surface, flat: o.flat, light: o.light, glows: o.glows, model: { kind: 'glb', file: `kenney/${id}.glb`, scale: o.scale ?? K, yaw: o.yaw ?? 0 } }
 }
 
 function made(id: ProceduralId, name: string, category: Category, mount: Mount, o: Opts = {}): CatalogItem {
-  return { id, name, category, mount, surface: o.surface, flat: o.flat, model: { kind: 'procedural', build: id } }
+  return { id, name, category, mount, surface: o.surface, flat: o.flat, light: o.light, glows: o.glows, model: { kind: 'procedural', build: id } }
 }
 
 const top = { surface: true }
+const glows = { glows: true }
+const floorLamp = { light: { y: 0.88, intensity: 3, distance: 4.5 } }
+const tableLamp = { light: { y: 0.75, intensity: 1.6, distance: 2.8 } }
 
 export const CATALOG: CatalogItem[] = [
   // Desk & tech
   kenney('desk', 'Desk', 'desk', 'floor', top),
   kenney('deskCorner', 'Corner Desk', 'desk', 'floor', top),
-  made('monitorWide', 'Ultrawide Monitor', 'desk', 'surface'),
+  made('monitorWide', 'Ultrawide Monitor', 'desk', 'surface', glows),
   kenney('computerScreen', 'Monitor', 'desk', 'surface'),
   kenney('computerKeyboard', 'Keyboard', 'desk', 'surface'),
   kenney('computerMouse', 'Mouse', 'desk', 'surface'),
-  made('pcTower', 'Gaming PC', 'desk', 'surface'),
+  made('pcTower', 'Gaming PC', 'desk', 'surface', glows),
   made('deskMat', 'Desk Mat', 'desk', 'surface', top),
   kenney('laptop', 'Laptop', 'desk', 'surface'),
   kenney('speakerSmall', 'Desk Speaker', 'desk', 'surface'),
@@ -107,13 +114,14 @@ export const CATALOG: CatalogItem[] = [
   kenney('trashcan', 'Bin', 'storage', 'floor'),
 
   // Lighting
-  kenney('lampRoundFloor', 'Floor Lamp', 'lighting', 'floor'),
-  kenney('lampSquareFloor', 'Square Floor Lamp', 'lighting', 'floor'),
-  kenney('lampRoundTable', 'Table Lamp', 'lighting', 'surface'),
-  kenney('lampSquareTable', 'Square Table Lamp', 'lighting', 'surface'),
-  kenney('lampWall', 'Wall Lamp', 'lighting', 'wall'),
-  kenney('lampSquareCeiling', 'Ceiling Light', 'lighting', 'ceiling'),
-  kenney('ceilingFan', 'Ceiling Fan', 'lighting', 'ceiling', { scale: 2.4 }),
+  kenney('lampRoundFloor', 'Floor Lamp', 'lighting', 'floor', floorLamp),
+  kenney('lampSquareFloor', 'Square Floor Lamp', 'lighting', 'floor', floorLamp),
+  kenney('lampRoundTable', 'Table Lamp', 'lighting', 'surface', tableLamp),
+  kenney('lampSquareTable', 'Square Table Lamp', 'lighting', 'surface', tableLamp),
+  kenney('lampWall', 'Wall Lamp', 'lighting', 'wall', { light: { y: 0.5, intensity: 1.6, distance: 3 } }),
+  made('ledStrip', 'LED Strip', 'lighting', 'wall', glows),
+  kenney('lampSquareCeiling', 'Ceiling Light', 'lighting', 'ceiling', { light: { y: 0, intensity: 3.5, distance: 6 } }),
+  kenney('ceilingFan', 'Ceiling Fan', 'lighting', 'ceiling', { scale: 2.4, light: { y: 0, intensity: 2.5, distance: 5 } }),
 
   // Decor
   kenney('rugRectangle', 'Rug', 'decor', 'floor', { flat: true, scale: 1.3 }),

@@ -1,7 +1,7 @@
 import { useCursor } from '@react-three/drei'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
-import { Raycaster, type Group, type Mesh, type Object3D, type Plane } from 'three'
+import { Raycaster, type Group, type Mesh, type MeshStandardMaterial, type Object3D, type Plane, type PointLight } from 'three'
 import { useShallow } from 'zustand/react/shallow'
 import { gsap, useGSAP } from '../anim/gsap'
 import { catalogById } from '../catalog/catalog'
@@ -26,7 +26,8 @@ import { THICKNESS } from './dimensions'
 import { applyColors } from './colors'
 import { applyLook, type Look } from './looks'
 import { candidateMatrix, placement, solvePlacement } from './placementSolver'
-import { clippedRaycast, itemAnims, itemObjects } from './sceneRefs'
+import { atmo } from './atmosphere'
+import { clippedRaycast, itemAnims, itemObjects, rgbMaterials } from './sceneRefs'
 
 const NONE: PlacedItem[] = []
 
@@ -68,7 +69,8 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
   const children = useRoom(useShallow((s) => s.doc.items.filter((c) => c.parentId === item.id && c.id !== carriedId)))
   const selected = useUi((s) => s.selectedItemId === item.id)
   const [hovered, setHovered] = useState(false)
-  useCursor(hovered, 'grab')
+  const [pointing, setPointing] = useState(false) // view mode: hovering something switchable
+  useCursor(hovered || pointing, hovered ? 'grab' : 'pointer')
 
   const outer = useRef<Group>(null!)
   const anim = useRef<Group>(null!)
@@ -80,6 +82,71 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
   }, [proto, clip])
 
   useEffect(() => applyColors(object, item.colors), [object, item.colors])
+
+  // ---- Power: lamps light the room, electronics glow; both switch on and off ----
+  const powered = !ghost && (!!entry.light || !!entry.glows)
+  const isOn = item.on !== false
+  const power = useRef({ p: isOn ? 1 : 0 })
+  const light = useRef<PointLight>(null)
+  const parts = useMemo(() => {
+    const lamps: MeshStandardMaterial[] = []
+    const glowing: MeshStandardMaterial[] = []
+    const rgb: MeshStandardMaterial[] = []
+    object.traverse((o) => {
+      const mesh = o as Mesh
+      if (!mesh.isMesh) return
+      for (const mat of (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as MeshStandardMaterial[]) {
+        if (mat.name === 'lamp') lamps.push(mat)
+        else if (mat.userData.glow) glowing.push(mat)
+        if (mat.name === 'rgb') rgb.push(mat)
+      }
+    })
+    return { lamps, glowing, rgb }
+  }, [object])
+
+  // The frame loop reads parts through a ref: it mutates these materials every frame,
+  // which is the renderer's business, not React's
+  const partsRef = useRef(parts)
+  useEffect(() => {
+    partsRef.current = parts
+  }, [parts])
+
+  useEffect(() => {
+    if (ghost) return
+    for (const m of parts.rgb) rgbMaterials.add(m)
+    return () => {
+      for (const m of parts.rgb) rgbMaterials.delete(m)
+    }
+  }, [parts, ghost])
+
+  // Switching on flickers like a real bulb; switching off fades. Skipped on first mount.
+  const switched = useRef(false)
+  useGSAP(
+    () => {
+      if (!powered) return
+      if (!switched.current) {
+        switched.current = true
+        return
+      }
+      const p = power.current
+      gsap.killTweensOf(p)
+      if (isOn) gsap.timeline().to(p, { p: 0.7, duration: 0.05 }).to(p, { p: 0.1, duration: 0.06 }).to(p, { p: 1, duration: 0.5, ease: 'power2.out' })
+      else gsap.to(p, { p: 0, duration: 0.35, ease: 'power2.in' })
+    },
+    { dependencies: [isOn] },
+  )
+
+  useFrame(() => {
+    if (!powered) return
+    const k = power.current.p
+    // Lamps matter more as it gets darker outside
+    if (light.current && entry.light) light.current.intensity = entry.light.intensity * k * (0.35 + atmo.lamps)
+    const { lamps, glowing } = partsRef.current
+    for (const m of lamps) m.emissive.setRGB(1, 0.78, 0.45).multiplyScalar(k * (0.25 + atmo.lamps * 0.9))
+    // Per-frame mutation of three.js materials is how R3F works; the React-purity rule doesn't apply
+    // oxlint-disable-next-line react/immutability
+    for (const m of glowing) m.emissiveIntensity = (m.userData.glowIntensity ?? 1) * k
+  })
   const look: Look = ghost ? 'ghost' : selected ? 'selected' : hovered ? 'hover' : 'normal'
   useEffect(() => applyLook(object, look), [object, look])
 
@@ -112,6 +179,11 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     ? {}
     : {
         onPointerOver: (e: ThreeEvent<PointerEvent>) => {
+          if (powered && useUi.getState().mode === 'view') {
+            e.stopPropagation()
+            setPointing(true)
+            return
+          }
           if (!canEdit()) return
           e.stopPropagation() // the top-most item wins, not the desk under it
           setHovered(true)
@@ -119,7 +191,14 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
         },
         onPointerOut: () => {
           setHovered(false)
+          setPointing(false)
           if (!useUi.getState().carryItem) setCameraLocked(false)
+        },
+        // In view mode, clicking a lamp or a screen flips its switch
+        onClick: (e: ThreeEvent<MouseEvent>) => {
+          if (!powered || useUi.getState().mode !== 'view' || e.delta > 6) return
+          e.stopPropagation()
+          useRoom.getState().togglePower(item.id)
         },
         onPointerDown: (e: ThreeEvent<PointerEvent>) => {
           if (!canEdit() || e.button !== 0) return
@@ -132,6 +211,9 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     <group ref={outer} position={position} rotation-y={item.wall ? 0 : item.rot} userData={{ itemId: item.id }} {...handlers}>
       <group ref={anim}>
         <primitive object={object} />
+        {powered && entry.light && (
+          <pointLight ref={light} position={[0, size.y * entry.light.y, 0]} color="#ffcf94" distance={entry.light.distance} decay={2} intensity={0} />
+        )}
         {/* Children sit on this item's top surface */}
         <group position-y={size.y}>
           <ItemList items={children} clip={clip} ghost={ghost} />

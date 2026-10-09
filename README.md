@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 4 (customisation) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
+**Status:** Phase 5 (atmosphere) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -36,6 +36,11 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 - Select an item to recolour each of its parts (wood, fabric, metal, RGB lighting…), or reset it.
 - With nothing selected, the Room panel styles the **walls** (paint, stripes, floral, brick, panels, tiles) and the **floor** (planks, parquet, tiles, carpet, concrete) in any colour.
 - Paint all walls at once, pick one with N/E/S/W, or just click a wall in the room.
+
+**Atmosphere (top-right)**
+- Five moods (sunny, sunset, rain, snow, night) blend smoothly into each other: light, sky, the view through the windows, and rain or snow falling around the room.
+- Click a lamp, monitor, PC or LED strip in **View** mode to switch it on or off (or use the selection bar in Decorate). Lamps really light the room, which matters most at night.
+- **RGB** sends every RGB part through the rainbow.
 
 **Blueprint mode**
 | Input | Action |
