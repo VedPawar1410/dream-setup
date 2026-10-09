@@ -35,6 +35,20 @@ let markReady!: () => void
 export const sceneReady = new Promise<void>((resolve) => (markReady = resolve))
 export { markReady }
 
+/**
+ * Switching rooms: the walls sink and the room drops away, `apply` swaps the document at
+ * the low point, then the new room rises the same way it did on first load.
+ */
+export function playRoomSwap(apply: () => void) {
+  return gsap
+    .timeline()
+    .to(intro.walls, { h: 0, duration: 0.35, ease: 'power2.in', stagger: 0.04 })
+    .to(intro.room, { p: 0, duration: 0.35, ease: 'power2.in' }, 0.1)
+    .add(apply)
+    .to(intro.room, { p: 1, duration: 0.9, ease: 'expo.out' })
+    .to(intro.walls, { h: 1, duration: 0.8, ease: 'power3.out', stagger: 0.1 }, '-=0.65')
+}
+
 export function playIntro(controls: CameraControlsImpl) {
   const home = { ...HOME, distance: homeDistance(controls) }
   const cam = { azimuth: HOME.azimuth - 1.4, polar: 0.3, distance: home.distance * 1.7 }
