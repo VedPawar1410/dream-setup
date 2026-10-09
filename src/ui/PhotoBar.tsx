@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
+import { shutter } from '../audio/sound'
 import { captureFrame, useSaves } from '../persistence/saves'
 import { exitPhoto, FILTERS, setBokeh, setFilter } from '../scene/photo'
 import { useUi } from '../store/uiStore'
@@ -33,6 +34,7 @@ export default function PhotoBar() {
   const take = () => {
     const url = captureFrame()
     if (!url) return
+    shutter()
     gsap.fromTo('.flash', { opacity: 0.9 }, { opacity: 0, duration: 0.6, ease: 'power2.out' })
     gsap.fromTo('.shutter', { scale: 0.85 }, { scale: 1, duration: 0.5, ease: 'elastic.out(1, 0.4)' })
     const date = new Date()
@@ -57,7 +59,7 @@ export default function PhotoBar() {
       <div className="photo-bar" role="toolbar" aria-label="Photo mode">
         <div className="filters">
           {FILTERS.map((f) => (
-            <button key={f.id} className={`chip${filter === f.id ? ' active' : ''}`} onClick={() => setFilter(f.id)}>
+            <button key={f.id} className={`chip${filter === f.id ? ' active' : ''}`} data-sound="toggle" onClick={() => setFilter(f.id)}>
               {f.label}
             </button>
           ))}
@@ -66,10 +68,10 @@ export default function PhotoBar() {
           Blur
           <input type="range" min={0} max={6} step={0.1} value={bokeh} onChange={(e) => setBokeh(Number(e.target.value))} />
         </label>
-        <button className="shutter" onClick={take} aria-label="Take photo" title="Take photo">
+        <button className="shutter" data-sound="none" onClick={take} aria-label="Take photo" title="Take photo">
           <span />
         </button>
-        <button className="pill-btn" onClick={exitPhoto}>
+        <button className="pill-btn" data-sound="none" onClick={exitPhoto}>
           Done
         </button>
       </div>

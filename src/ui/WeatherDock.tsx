@@ -42,6 +42,7 @@ export default function WeatherDock() {
             key={m.id}
             className="weather-btn"
             data-weather={m.id}
+            data-sound="toggle"
             role="radio"
             aria-checked={weather === m.id}
             aria-label={m.label}
@@ -54,6 +55,7 @@ export default function WeatherDock() {
       </div>
       <button
         className={`rgb-btn${rgbCycle ? ' on' : ''}`}
+        data-sound="toggle"
         aria-pressed={rgbCycle}
         title={rgbCycle ? 'RGB cycle: on' : 'RGB cycle: off'}
         onClick={() => setRgbCycle(!rgbCycle)}

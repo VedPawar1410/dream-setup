@@ -1,5 +1,6 @@
 import { gsap } from '../anim/gsap'
 import { intro } from '../anim/intro'
+import { play } from '../audio/sound'
 import { itemSizes } from '../catalog/models'
 import { openingHitsWallItems } from '../store/itemRules'
 import { useRoom, type Opening, type WallSide } from '../store/roomStore'
@@ -42,6 +43,7 @@ export function startMoving(o: Opening) {
   const { wall, offset, ...item } = o
   useUi.setState({ carry: { item, isNew: false }, ghost: { wall, offset, valid: true }, selectedId: o.id })
   setCameraLocked(true)
+  play('pickup')
 }
 
 /** The pointer is over `wall` at `rawOffset` along it: slide the ghost there, clamped to the wall. */
@@ -68,12 +70,14 @@ export function drop() {
       ? room.addOpening({ ...carry.item, wall: ghost.wall, offset: ghost.offset })
       : room.updateOpening(carry.item.id, { wall: ghost.wall, offset: ghost.offset })
     if (placed) {
+      play('place')
       useUi.setState({ carry: null, ghost: null, selectedId: carry.item.id })
       setCameraLocked(false)
       return
     }
   }
   // A new opening keeps waiting for a valid spot; a moved one goes back where it was.
+  play('error')
   if (!carry.isNew) cancelCarry()
 }
 
@@ -86,6 +90,7 @@ export function removeSelected() {
   const { selectedId } = useUi.getState()
   if (!selectedId) return
   useUi.setState({ selectedId: null })
+  play('remove')
   const remove = () => useRoom.getState().removeOpening(selectedId)
   const obj = openingObjects.get(selectedId)
   if (!obj) return remove()

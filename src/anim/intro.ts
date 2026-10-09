@@ -1,6 +1,7 @@
 import type { CameraControlsImpl } from '@react-three/drei'
 import { useRoom } from '../store/roomStore'
-import { gsap } from './gsap'
+import { whoosh } from '../audio/sound'
+import { gsap, reducedMotion } from './gsap'
 
 /**
  * Intro progress lives in a plain object. GSAP writes to it and the scene reads it
@@ -40,18 +41,21 @@ export { markReady }
  * the low point, then the new room rises the same way it did on first load.
  */
 export function playRoomSwap(apply: () => void) {
+  whoosh(0.5, false, 0.16)
   return gsap
     .timeline()
     .to(intro.walls, { h: 0, duration: 0.35, ease: 'power2.in', stagger: 0.04 })
     .to(intro.room, { p: 0, duration: 0.35, ease: 'power2.in' }, 0.1)
     .add(apply)
+    .add(() => whoosh(0.9, true, 0.16))
     .to(intro.room, { p: 1, duration: 0.9, ease: 'expo.out' })
     .to(intro.walls, { h: 1, duration: 0.8, ease: 'power3.out', stagger: 0.1 }, '-=0.65')
 }
 
 export function playIntro(controls: CameraControlsImpl) {
   const home = { ...HOME, distance: homeDistance(controls) }
-  const cam = { azimuth: HOME.azimuth - 1.4, polar: 0.3, distance: home.distance * 1.7 }
+  // With reduced motion the camera starts where it ends, and only the room rises into place
+  const cam = reducedMotion ? { ...home } : { azimuth: HOME.azimuth - 1.4, polar: 0.3, distance: home.distance * 1.7 }
   const applyCam = () => {
     controls.rotateTo(cam.azimuth, cam.polar, false)
     controls.dollyTo(cam.distance, false)

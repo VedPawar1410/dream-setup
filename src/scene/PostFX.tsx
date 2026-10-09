@@ -11,6 +11,7 @@ import {
   type VignetteEffect,
 } from 'postprocessing'
 import { useRef } from 'react'
+import { useTier } from '../store/settingsStore'
 import { useUi } from '../store/uiStore'
 import { focusPoint, photoFx } from './photo'
 
@@ -18,6 +19,7 @@ import { focusPoint, photoFx } from './photo'
 // display-space effects (colour grading, anti-aliasing, vignette, grain).
 export default function PostFX() {
   const photo = useUi((s) => s.photo)
+  const high = useTier() === 'high'
   const hueSat = useRef<HueSaturationEffect>(null)
   const brightCon = useRef<BrightnessContrastEffect>(null)
   const sepia = useRef<SepiaEffect>(null)
@@ -50,7 +52,8 @@ export default function PostFX() {
     <EffectComposer multisampling={0}>
       {/* Ambient occlusion: the soft contact darkening in corners and under objects
           that makes a room look grounded */}
-      <N8AO halfRes quality="medium" aoRadius={0.5} distanceFalloff={0.6} intensity={2.2} />
+      {/* The priciest pass after resolution itself, so the low tier drops it */}
+      {high && <N8AO halfRes quality="medium" aoRadius={0.5} distanceFalloff={0.6} intensity={2.2} />}
       {/* Depth of field is an expensive extra pass, so it only exists in photo mode */}
       {photo && <DepthOfField ref={dof} target={focusPoint} focalLength={0.03} bokehScale={0} />}
       {/* Threshold 1: only HDR emissives bloom (RGB strips, screens, lamps) */}

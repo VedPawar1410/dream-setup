@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import { gsap } from '../anim/gsap'
+import { play } from '../audio/sound'
 import { useUi } from '../store/uiStore'
 import { setMode } from './blueprintActions'
 
@@ -48,6 +49,7 @@ export function setBokeh(value: number) {
 export function enterPhoto() {
   if (useUi.getState().photo) return
   setMode('view')
+  play('open')
   useUi.setState({ photo: true })
   setFilter(useUi.getState().photoFilter)
   setBokeh(useUi.getState().photoBokeh)
@@ -56,6 +58,7 @@ export function enterPhoto() {
 /** Leaving photo mode returns the normal view to its unfiltered look. */
 export function exitPhoto() {
   if (!useUi.getState().photo) return
+  play('close')
   useUi.setState({ photo: false })
   gsap.to(photoFx, { ...PRESETS.natural, bokeh: 0, duration: 0.5, ease: 'power2.out', overwrite: 'auto' })
 }

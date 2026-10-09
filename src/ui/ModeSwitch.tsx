@@ -50,13 +50,15 @@ export default function ModeSwitch() {
           key={m.id}
           className="mode-btn"
           data-mode={m.id}
+          data-sound="toggle"
           role="tab"
           aria-selected={mode === m.id}
           onClick={() => setMode(m.id)}
           title={`${m.label} (${KEYS[m.id]})`}
+          aria-label={m.label}
         >
           <svg viewBox="0 0 24 24">{m.icon}</svg>
-          {m.label}
+          <span className="mode-label">{m.label}</span>
         </button>
       ))}
     </div>

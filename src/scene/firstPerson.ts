@@ -1,6 +1,7 @@
 import { CameraControlsImpl } from '@react-three/drei'
 import { Box3, MathUtils, Vector3, type PerspectiveCamera } from 'three'
-import { gsap } from '../anim/gsap'
+import { gsap, reducedMotion } from '../anim/gsap'
+import { whoosh } from '../audio/sound'
 import { HOME, homeDistance } from '../anim/intro'
 import { useRoom } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
@@ -49,13 +50,14 @@ function fly(c: CameraControlsImpl, toPos: Vector3, toTarget: Vector3, toFov: nu
   const s = { k: 0 }
   flying = true
   c.enabled = false
+  whoosh(duration * 0.8, toFov < camera.fov) // standing up rises, sitting down falls
   gsap.to(s, {
     k: 1,
-    duration,
+    duration: reducedMotion ? duration * 0.5 : duration,
     ease: 'power3.inOut',
     onUpdate: () => {
       pos.lerpVectors(fromPos, toPos, s.k)
-      pos.y += Math.sin(Math.PI * s.k) * 0.6
+      if (!reducedMotion) pos.y += Math.sin(Math.PI * s.k) * 0.6
       target.lerpVectors(fromTarget, toTarget, s.k)
       camera.fov = MathUtils.lerp(fromFov, toFov, s.k)
       camera.updateProjectionMatrix()

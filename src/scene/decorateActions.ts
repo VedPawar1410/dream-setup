@@ -1,4 +1,5 @@
 import { gsap } from '../anim/gsap'
+import { play } from '../audio/sound'
 import { useRoom, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { setCameraLocked } from './camera'
@@ -27,6 +28,7 @@ export function startMovingItem(id: string) {
   // Carry it at its current on-screen angle, even if it was sitting on a rotated parent
   useUi.setState({ carryItem: { catalogId: item.catalogId, itemId: id, rot: obj ? worldYaw(obj) : item.rot, colors: item.colors }, selectedItemId: id })
   setCameraLocked(true)
+  play('pickup')
 }
 
 export function cancelItemCarry() {
@@ -39,13 +41,18 @@ export function cancelItemCarry() {
 export function commitPlacement(keep = false): boolean {
   const { carryItem } = useUi.getState()
   const { candidate, valid } = placement
-  if (!carryItem || !candidate || !valid) return false
+  if (!carryItem || !candidate) return false
+  if (!valid) {
+    play('error')
+    return false
+  }
 
   const room = useRoom.getState()
   const id = carryItem.itemId ?? crypto.randomUUID()
   const fields = candidateFields(candidate)
   if (carryItem.itemId) room.updateItem(id, fields)
   else room.addItem({ id, catalogId: carryItem.catalogId, ...fields, colors: carryItem.colors })
+  play('place')
 
   if (keep && !carryItem.itemId) return true // same item stays in hand
   placement.candidate = null
@@ -56,7 +63,9 @@ export function commitPlacement(keep = false): boolean {
 
 export function rotateInHand(dir: 1 | -1) {
   const { carryItem } = useUi.getState()
-  if (carryItem) useUi.setState({ carryItem: { ...carryItem, rot: carryItem.rot + dir * STEP } })
+  if (!carryItem) return
+  useUi.setState({ carryItem: { ...carryItem, rot: carryItem.rot + dir * STEP } })
+  play('rotate')
 }
 
 export function rotateSelected(dir: 1 | -1) {
@@ -67,6 +76,7 @@ export function rotateSelected(dir: 1 | -1) {
   const turned = { ...candidateOf(item), rot } as ReturnType<typeof candidateOf>
   if (!isValid(turned, item.catalogId, subtree(useRoom.getState().doc.items, item.id))) return shake(item.id)
   useRoom.getState().updateItem(item.id, { rot })
+  play('rotate')
   // The frame snaps to the new angle; the inner group starts at the old one and eases over
   const anim = itemAnims.get(item.id)
   if (anim) gsap.fromTo(anim.rotation, { y: -dir * STEP }, { y: 0, duration: 0.45, ease: 'back.out(1.8)' })
@@ -74,6 +84,7 @@ export function rotateSelected(dir: 1 | -1) {
 
 /** A little "nope" wiggle when an action is blocked. */
 export function shake(id: string) {
+  play('error')
   const anim = itemAnims.get(id)
   if (anim) gsap.fromTo(anim.position, { x: -0.05 }, { x: 0, duration: 0.6, ease: 'elastic.out(1.2, 0.2)' })
 }
@@ -82,6 +93,7 @@ export function removeSelectedItem() {
   const { selectedItemId: id } = useUi.getState()
   if (!id) return
   useUi.setState({ selectedItemId: null })
+  play('remove')
   const remove = () => useRoom.getState().removeItem(id)
   const anim = itemAnims.get(id)
   if (!anim) return remove()
@@ -93,6 +105,12 @@ export function duplicateSelected() {
   const item = findItem(selectedItemId)
   const obj = selectedItemId ? itemObjects.get(selectedItemId) : undefined
   if (item) startPlacing(item.catalogId, obj ? worldYaw(obj) : item.rot, item.colors)
+}
+
+/** Flip a lamp, screen or RGB part on or off, with a satisfying click. */
+export function switchPower(id: string) {
+  useRoom.getState().togglePower(id)
+  play('switch')
 }
 
 export function setItemColor(id: string, slot: string, hex: string) {

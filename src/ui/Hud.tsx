@@ -1,6 +1,7 @@
 import { SplitText } from 'gsap/SplitText'
 import { useEffect, useRef } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
+import { play } from '../audio/sound'
 import { sceneReady } from '../anim/intro'
 import { resetView, rotateQuarter } from '../scene/camera'
 import { useUi, type Mode } from '../store/uiStore'
@@ -14,6 +15,8 @@ import ModeSwitch from './ModeSwitch'
 import PhotoBar from './PhotoBar'
 import RoomsPanel from './RoomsPanel'
 import SelectionBar from './SelectionBar'
+import SettingsMenu from './SettingsMenu'
+import Tour from './Tour'
 import WeatherDock from './WeatherDock'
 
 gsap.registerPlugin(SplitText)
@@ -57,7 +60,9 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
 }
 
 const openRooms = () => {
+  if (useUi.getState().roomsOpen) return
   void refreshCurrentThumbnail() // so the current room's card shows how it looks right now
+  play('open')
   useUi.setState({ roomsOpen: true })
 }
 
@@ -136,7 +141,7 @@ export default function Hud() {
         <div>
           <h1 className="title">Dream Setup</h1>
           <div className="subtitle">
-            <button className="room-switch" onClick={openRooms} title="My rooms (M)">
+            <button className="room-switch" data-sound="none" onClick={openRooms} title="My rooms (M)">
               {roomName}
               <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
             </button>
@@ -153,6 +158,7 @@ export default function Hud() {
       <SelectionBar />
       <RoomsPanel />
       <PhotoBar />
+      <Tour />
       <div className="dock">
         <div className="hints">
           {hints.map((h) => (
@@ -174,12 +180,13 @@ export default function Hud() {
           <button className="icon-btn" onClick={() => rotateQuarter(1)} aria-label="Turn right (E)" title="Turn right (E)">
             <svg viewBox="0 0 24 24"><path d="M15 6h5v5M19.5 10.5A8 8 0 1 0 18 17" /></svg>
           </button>
-          <button className={`icon-btn${firstPerson ? ' on' : ''}`} onClick={toggleFirstPerson} aria-label="Sit at your desk (F)" title={firstPerson ? 'Stand up (F)' : 'Sit at your desk (F)'}>
+          <button className={`icon-btn${firstPerson ? ' on' : ''}`} data-sound="none" onClick={toggleFirstPerson} aria-label="Sit at your desk (F)" title={firstPerson ? 'Stand up (F)' : 'Sit at your desk (F)'}>
             <svg viewBox="0 0 24 24"><path d="M7 21v-4m10 4v-4M5 13h14v4H5zM7 13V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8" /></svg>
           </button>
-          <button className="icon-btn" onClick={togglePhoto} aria-label="Photo mode (P)" title="Photo mode (P)">
+          <button className="icon-btn" data-sound="none" onClick={togglePhoto} aria-label="Photo mode (P)" title="Photo mode (P)">
             <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" /></svg>
           </button>
+          <SettingsMenu />
         </div>
       </div>
     </div>

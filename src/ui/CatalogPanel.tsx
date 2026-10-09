@@ -49,7 +49,7 @@ export default function CatalogPanel() {
       {!q && (
         <nav className="chips" aria-label="Categories">
           {CATEGORIES.map((c) => (
-            <button key={c.id} className={`chip${c.id === category ? ' active' : ''}`} onClick={() => setCategory(c.id)}>
+            <button key={c.id} className={`chip${c.id === category ? ' active' : ''}`} data-sound="toggle" onClick={() => setCategory(c.id)}>
               {c.label}
             </button>
           ))}
