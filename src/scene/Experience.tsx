@@ -1,4 +1,5 @@
 import Background from './Background'
+import Blueprint from './Blueprint'
 import CameraRig from './CameraRig'
 import Lighting from './Lighting'
 import PostFX from './PostFX'
@@ -10,6 +11,7 @@ export default function Experience() {
       <Background />
       <Lighting />
       <RoomShell />
+      <Blueprint />
       <CameraRig />
       <PostFX />
     </>

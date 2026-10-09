@@ -12,6 +12,8 @@ export const intro = {
   room: { p: 0 },
   // One entry per wall, in the order north, east, south, west. 0 = flat, 1 = full height.
   walls: [{ h: 0 }, { h: 0 }, { h: 0 }, { h: 0 }],
+  /** Camera moves that would fight the intro's swoop wait for this. */
+  done: false,
 }
 
 export const HOME = { azimuth: Math.PI / 4, polar: 1.0 }
@@ -47,7 +49,13 @@ export function playIntro(controls: CameraControlsImpl) {
   applyCam()
   controls.enabled = false
 
-  const tl = gsap.timeline({ paused: true, onComplete: () => void (controls.enabled = true) })
+  const tl = gsap.timeline({
+    paused: true,
+    onComplete: () => {
+      controls.enabled = true
+      intro.done = true
+    },
+  })
   tl.to(intro.room, { p: 1, duration: 1.4, ease: 'expo.out' }, 0)
     .to(cam, { ...home, duration: 2.8, ease: 'power3.inOut', onUpdate: applyCam }, 0)
     .to(intro.walls, { h: 1, duration: 1.2, ease: 'power3.out', stagger: 0.14 }, 0.6)
