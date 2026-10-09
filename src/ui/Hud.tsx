@@ -1,13 +1,15 @@
 import { SplitText } from 'gsap/SplitText'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
 import { sceneReady } from '../anim/intro'
 import { resetView, rotateQuarter } from '../scene/camera'
 import { useUi, type Mode } from '../store/uiStore'
+import { refreshCurrentThumbnail, useSaves } from '../persistence/saves'
 import BlueprintPanel from './BlueprintPanel'
 import CatalogPanel from './CatalogPanel'
 import Inspector from './Inspector'
 import ModeSwitch from './ModeSwitch'
+import RoomsPanel from './RoomsPanel'
 import SelectionBar from './SelectionBar'
 import WeatherDock from './WeatherDock'
 
@@ -42,9 +44,28 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
   ],
 }
 
+const openRooms = () => {
+  void refreshCurrentThumbnail() // so the current room's card shows how it looks right now
+  useUi.setState({ roomsOpen: true })
+}
+
+const STATUS = { saved: 'Saved', saving: 'Saving…', error: 'Not saved' }
+
 export default function Hud() {
   const root = useRef<HTMLDivElement>(null)
   const mode = useUi((s) => s.mode)
+  const roomName = useSaves((s) => s.name)
+  const status = useSaves((s) => (s.available ? s.status : null))
+
+  // M opens "My rooms"
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey) return
+      if (e.code === 'KeyM') openRooms()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   const introDone = useRef(false)
 
   useGSAP(
@@ -84,7 +105,13 @@ export default function Hud() {
       <header className="topbar">
         <div>
           <h1 className="title">Dream Setup</h1>
-          <p className="subtitle">Your room</p>
+          <div className="subtitle">
+            <button className="room-switch" onClick={openRooms} title="My rooms (M)">
+              {roomName}
+              <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+            {status && <span className={`save-status ${status}`}>{STATUS[status]}</span>}
+          </div>
         </div>
         <ModeSwitch />
         <WeatherDock />
@@ -94,6 +121,7 @@ export default function Hud() {
       <CatalogPanel />
       <Inspector />
       <SelectionBar />
+      <RoomsPanel />
       <div className="dock">
         <div className="hints">
           {HINTS[mode].map((h) => (

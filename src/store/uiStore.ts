@@ -31,6 +31,7 @@ type UiState = {
   /** Which wall(s) the Room panel paints. */
   paintTarget: WallSide | 'all'
   roomTab: 'walls' | 'floor'
+  roomsOpen: boolean
 }
 
 export const useUi = create<UiState>(() => ({
@@ -42,4 +43,5 @@ export const useUi = create<UiState>(() => ({
   carryItem: null,
   paintTarget: 'all',
   roomTab: 'walls',
+  roomsOpen: false,
 }))
