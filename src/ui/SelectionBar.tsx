@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
 import { catalogById } from '../catalog/catalog'
-import { duplicateSelected, removeSelectedItem, rotateSelected } from '../scene/decorateActions'
+import { duplicateSelected, removeSelectedItem, rotateSelected, switchPower } from '../scene/decorateActions'
 import { useRoom } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 
@@ -9,7 +9,6 @@ import { useUi } from '../store/uiStore'
 export default function SelectionBar() {
   const id = useUi((s) => (s.mode === 'decorate' && !s.carryItem ? s.selectedItemId : null))
   const item = useRoom((s) => s.doc.items.find((it) => it.id === id))
-  const togglePower = useRoom((s) => s.togglePower)
   const entry = item ? catalogById.get(item.catalogId) : undefined
   const switchable = !!entry?.light || !!entry?.glows
   const bar = useRef<HTMLDivElement>(null)
@@ -26,12 +25,12 @@ export default function SelectionBar() {
     <div className="selection-bar" ref={bar} role="toolbar" aria-label="Selected item">
       <span className="sel-name">{entry?.name ?? ''}</span>
       {switchable && (
-        <button className={`sel-btn${item?.on === false ? '' : ' lit'}`} onClick={() => item && togglePower(item.id)} title="Switch on/off (or click it in View mode)">
+        <button className={`sel-btn${item?.on === false ? '' : ' lit'}`} data-sound="none" onClick={() => item && switchPower(item.id)} title="Switch on/off (or click it in View mode)">
           <svg viewBox="0 0 24 24"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.8 0" /></svg>
           {item?.on === false ? 'Turn on' : 'Turn off'}
         </button>
       )}
-      <button className="sel-btn" onClick={() => rotateSelected(1)} disabled={!!item?.wall} title="Rotate (R, Shift+R back)">
+      <button className="sel-btn" data-sound="none" onClick={() => rotateSelected(1)} disabled={!!item?.wall} title="Rotate (R, Shift+R back)">
         <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6" /></svg>
         Rotate
       </button>
@@ -39,7 +38,7 @@ export default function SelectionBar() {
         <svg viewBox="0 0 24 24"><path d="M8 8h12v12H8zM4 16V4h12" /></svg>
         Duplicate
       </button>
-      <button className="sel-btn danger" onClick={removeSelectedItem} title="Delete (Del)">
+      <button className="sel-btn danger" data-sound="none" onClick={removeSelectedItem} title="Delete (Del)">
         <svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
         Delete
       </button>

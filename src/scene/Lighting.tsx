@@ -1,7 +1,8 @@
 import { Environment, Lightformer } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import type { DirectionalLight, HemisphereLight, PointLight } from 'three'
+import { useTier } from '../store/settingsStore'
 import { atmo } from './atmosphere'
 
 // Every value here follows the live atmosphere (see atmosphere.ts) each frame, so a
@@ -10,6 +11,17 @@ export default function Lighting() {
   const sun = useRef<DirectionalLight>(null!)
   const hemi = useRef<HemisphereLight>(null!)
   const fill = useRef<PointLight>(null!)
+  const shadowSize = useTier() === 'high' ? 2048 : 1024
+
+  // three.js allocates the shadow map once at its first size; drop it so the next frame
+  // re-creates it at the new size
+  useEffect(() => {
+    const shadow = sun.current.shadow
+    shadow.mapSize.set(shadowSize, shadowSize)
+    shadow.map?.dispose()
+    // oxlint-disable-next-line react/immutability
+    shadow.map = null
+  }, [shadowSize])
 
   useFrame(({ scene }) => {
     sun.current.color.copy(atmo.sunColor)
@@ -28,7 +40,7 @@ export default function Lighting() {
       <hemisphereLight ref={hemi} />
 
       {/* The sun (or moon) sits behind the north wall, so windows throw light patches on the floor */}
-      <directionalLight ref={sun} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02}>
+      <directionalLight ref={sun} castShadow shadow-bias={-0.0004} shadow-normalBias={0.02}>
         <orthographicCamera attach="shadow-camera" args={[-6, 6, 6, -6, 0.5, 25]} />
       </directionalLight>
 

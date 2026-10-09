@@ -21,6 +21,7 @@ import {
   rotateInHand,
   rotateSelected,
   selectItem,
+  switchPower,
 } from './decorateActions'
 import { THICKNESS } from './dimensions'
 import { applyColors } from './colors'
@@ -198,7 +199,7 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
         onClick: (e: ThreeEvent<MouseEvent>) => {
           if (!powered || useUi.getState().mode !== 'view' || e.delta > 6) return
           e.stopPropagation()
-          useRoom.getState().togglePower(item.id)
+          switchPower(item.id)
         },
         onPointerDown: (e: ThreeEvent<PointerEvent>) => {
           if (!canEdit() || e.button !== 0) return

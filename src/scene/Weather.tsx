@@ -1,8 +1,9 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import { BufferAttribute, BufferGeometry, ShaderMaterial } from 'three'
+import { setAmbience } from '../audio/sound'
 import { useRoom } from '../store/roomStore'
-import { setAtmosphere } from './atmosphere'
+import { atmo, setAtmosphere } from './atmosphere'
 import { THICKNESS } from './dimensions'
 import { rgbMaterials } from './sceneRefs'
 import { syncViewUniforms, viewUniforms } from './windowView'
@@ -21,6 +22,8 @@ export default function Weather() {
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
     syncViewUniforms(t)
+    // The rain and wind you hear follow the same blend as the rain you see
+    setAmbience(atmo.rain, atmo.snow)
     if (rgbCycle) {
       // Sweep every RGB part through the rainbow, each a little ahead of the last
       let i = 0

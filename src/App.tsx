@@ -3,16 +3,19 @@ import { select } from './scene/blueprintActions'
 import { selectItem } from './scene/decorateActions'
 import { setCaptureSource } from './persistence/saves'
 import Experience from './scene/Experience'
+import { useTier } from './store/settingsStore'
 import { useUi } from './store/uiStore'
 import Hud from './ui/Hud'
 
 export default function App() {
+  // Resolution is the biggest performance lever: a retina screen at 2× renders 4× the pixels
+  const dpr: number | [number, number] = useTier() === 'high' ? [1, 2] : 1
   return (
     <>
       <Canvas
         // PCF; three.js removed PCFSoftShadowMap (which plain `shadows` asks for)
         shadows="percentage"
-        dpr={[1, 2]}
+        dpr={dpr}
         // Narrow FOV flattens perspective toward the original's isometric "dollhouse" look
         camera={{ fov: 30, near: 0.1, far: 100 }}
         // Antialiasing happens in post (SMAA), so the default framebuffer doesn't need MSAA

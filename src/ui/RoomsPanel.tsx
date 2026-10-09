@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
+import { play } from '../audio/sound'
 import {
   deleteRoom,
   duplicateRoom,
@@ -22,7 +23,11 @@ function ago(t: number) {
   return rtf.format(-Math.round(s / 86400), 'day')
 }
 
-const close = () => useUi.setState({ roomsOpen: false })
+const close = () => {
+  if (!useUi.getState().roomsOpen) return
+  play('close')
+  useUi.setState({ roomsOpen: false })
+}
 
 /** "My rooms": open, rename, duplicate, delete, create, import and export rooms. */
 export default function RoomsPanel() {
@@ -65,7 +70,7 @@ export default function RoomsPanel() {
       <section className="rooms" role="dialog" aria-modal="true" aria-label="My rooms">
         <header className="rooms-head">
           <h2>My rooms</h2>
-          <button className="icon-btn small" onClick={close} aria-label="Close">
+          <button className="icon-btn small" data-sound="none" onClick={close} aria-label="Close">
             <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>
         </header>
@@ -96,6 +101,7 @@ export default function RoomsPanel() {
               e.target.value = '' // so picking the same file again still triggers
               if (file) run(async () => {
                 await importRoomFile(file)
+                play('confirm')
                 close()
               })
             }}

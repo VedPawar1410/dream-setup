@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 7 (first-person and photo mode) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
+**Status:** All 8 phases complete (v1). See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -56,6 +56,12 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 - Click anything in the scene to focus on it. The shutter flashes and shows a polaroid of the shot, which you can **Download** as a PNG.
 - Works from the dollhouse view or while seated. **Done** or **Esc** leaves.
 
+**Settings (gear, bottom-right)**
+- **Sound** on or off. Every action has a sound, and rain and wind fade in with the weather.
+- **Graphics**: Auto watches your frame rate and steps down if things get choppy; High renders at full retina resolution with ambient occlusion; Low is for older laptops.
+- **Show the tour again** replays the four-step intro that appears on your first visit.
+- The OS "reduce motion" setting shortens the camera intro and seat flights.
+
 **Blueprint mode**
 | Input | Action |
 |---|---|
@@ -77,11 +83,12 @@ npm run build    # type-check + production build into dist/
 Stack: Vite · React 19 · TypeScript · React Three Fiber + drei · GSAP · Zustand · IndexedDB (idb).
 Pushes to `main` deploy to GitHub Pages via `.github/workflows/deploy.yml`.
 
-## Features (planned)
+## Features
 - Blueprint mode: shape the room, place doors and windows
 - Free placement of furniture, PC gear, plants and decor, with stacking and snapping
 - Full RGB recoloring, wall paints and wallpapers, floor materials
 - Five weather moods (sunny, sunset, rain, snow, night) with animated transitions and RGB lighting
 - Dollhouse camera, plus a first-person view from your desk
-- Photo mode with PNG export
-- Autosave and save slots in the browser
+- Photo mode with filters, depth of field and PNG export
+- Autosave and save slots in the browser, with export/import
+- Sound effects and weather ambience, a first-visit tour, and adaptive graphics quality

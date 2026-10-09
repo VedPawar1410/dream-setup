@@ -37,6 +37,8 @@ type UiState = {
   photo: boolean
   photoFilter: Filter
   photoBokeh: number
+  /** The first-visit tour (also replayable from settings). */
+  tourOpen: boolean
 }
 
 export const useUi = create<UiState>(() => ({
@@ -53,4 +55,5 @@ export const useUi = create<UiState>(() => ({
   photo: false,
   photoFilter: 'natural',
   photoBokeh: 2,
+  tourOpen: false,
 }))
