@@ -1,5 +1,7 @@
 import { Canvas } from '@react-three/fiber'
+import { select } from './scene/blueprintActions'
 import Experience from './scene/Experience'
+import { useUi } from './store/uiStore'
 import Hud from './ui/Hud'
 
 export default function App() {
@@ -16,6 +18,10 @@ export default function App() {
         onCreated={({ gl }) => {
           // Per-material clipping planes (the wall cutaway) are off by default in three.js
           gl.localClippingEnabled = true
+        }}
+        // A click that hits nothing interactive (and wasn't a drag) clears the selection
+        onPointerMissed={() => {
+          if (!useUi.getState().carry) select(null)
         }}
       >
         <Experience />

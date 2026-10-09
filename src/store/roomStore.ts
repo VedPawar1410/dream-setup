@@ -1,8 +1,9 @@
 import { create } from 'zustand'
+import { clampSize, isValidOpening } from './rules'
 
 // The whole room is one plain, serialisable document. The 3D scene and the HUD only
-// *read* it; later phases add store actions as the only way to change it. That keeps
-// save/load a JSON.stringify away, and makes undo a stack of snapshots.
+// *read* it; the actions below are the only way to change it. That keeps save/load a
+// JSON.stringify away, and makes undo a stack of snapshots.
 
 export type WallSide = 'north' | 'east' | 'south' | 'west'
 
@@ -30,6 +31,8 @@ export type RoomDoc = {
   }
 }
 
+export type Shell = RoomDoc['shell']
+
 export const defaultRoom: RoomDoc = {
   version: 1,
   shell: {
@@ -45,6 +48,48 @@ export const defaultRoom: RoomDoc = {
   },
 }
 
-type RoomState = { doc: RoomDoc }
+type RoomState = {
+  doc: RoomDoc
+  resize: (patch: Partial<Pick<Shell, 'width' | 'depth' | 'height'>>) => void
+  /** Returns false (and changes nothing) if the opening doesn't fit. */
+  addOpening: (o: Opening) => boolean
+  updateOpening: (id: string, patch: Partial<Omit<Opening, 'id' | 'kind'>>) => boolean
+  removeOpening: (id: string) => void
+}
 
-export const useRoom = create<RoomState>(() => ({ doc: defaultRoom }))
+export const useRoom = create<RoomState>((set, get) => {
+  // Always replace, never mutate: Zustand selectors compare by reference, so a new
+  // object is what tells React "this changed".
+  const setShell = (shell: Shell) => set({ doc: { ...get().doc, shell } })
+
+  return {
+    doc: defaultRoom,
+
+    resize: (patch) => {
+      const shell = get().doc.shell
+      setShell({ ...shell, ...clampSize(shell, patch) })
+    },
+
+    addOpening: (o) => {
+      const shell = get().doc.shell
+      if (!isValidOpening(shell, o)) return false
+      setShell({ ...shell, openings: [...shell.openings, o] })
+      return true
+    },
+
+    updateOpening: (id, patch) => {
+      const shell = get().doc.shell
+      const current = shell.openings.find((o) => o.id === id)
+      if (!current) return false
+      const next = { ...current, ...patch }
+      if (!isValidOpening(shell, next)) return false
+      setShell({ ...shell, openings: shell.openings.map((o) => (o.id === id ? next : o)) })
+      return true
+    },
+
+    removeOpening: (id) => {
+      const shell = get().doc.shell
+      setShell({ ...shell, openings: shell.openings.filter((o) => o.id !== id) })
+    },
+  }
+})

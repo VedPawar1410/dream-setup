@@ -158,3 +158,282 @@ kbd {
     justify-content: flex-end;
   }
 }
+
+/* ---------- Phase 2: top bar, mode switch, blueprint panel ---------- */
+
+.topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 16px;
+}
+
+.mode-switch {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+
+.mode-pill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 12px;
+  background: rgb(177 140 255 / 0.22);
+  border: 1px solid rgb(177 140 255 / 0.45);
+}
+
+.mode-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.25s;
+}
+
+.mode-btn:hover,
+.mode-btn[aria-selected='true'] {
+  color: var(--ink);
+}
+
+.mode-btn:focus-visible,
+.tool-btn:focus-visible,
+.danger-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mode-btn svg,
+.tool-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.panel {
+  position: absolute;
+  top: 100px;
+  right: 32px;
+  width: 268px;
+  max-height: calc(100% - 210px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgb(23 18 31 / 0.72);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.35);
+  pointer-events: auto;
+  /* hidden until GSAP's autoAlpha shows it */
+  visibility: hidden;
+  opacity: 0;
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.slider output {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.slider input {
+  grid-column: 1 / -1;
+  appearance: none;
+  height: 4px;
+  margin: 4px 0;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--accent) var(--fill), rgb(255 255 255 / 0.12) var(--fill));
+  cursor: pointer;
+}
+
+.slider input::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgb(177 140 255 / 0.35);
+  transition:
+    transform 0.25s var(--ease-out),
+    box-shadow 0.25s;
+}
+
+.slider input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgb(177 140 255 / 0.35);
+}
+
+.slider input:hover::-webkit-slider-thumb,
+.slider input:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 6px rgb(177 140 255 / 0.4);
+}
+
+.tool-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.35s var(--ease-out),
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.tool-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tool-btn:hover {
+  transform: translateY(-2px);
+  background: rgb(255 255 255 / 0.12);
+}
+
+.tool-btn.active {
+  border-color: var(--accent);
+  background: rgb(177 140 255 / 0.2);
+  box-shadow: 0 0 0 3px rgb(177 140 255 / 0.15);
+}
+
+.panel-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.danger-btn {
+  margin-top: 2px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgb(255 107 129 / 0.4);
+  background: rgb(255 107 129 / 0.1);
+  color: #ff9aa9;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.3s var(--ease-out);
+}
+
+.danger-btn:hover {
+  background: rgb(255 107 129 / 0.2);
+  transform: translateY(-1px);
+}
+
+/* Room dimension label, rendered in 3D space by drei's <Html> */
+.dim-label {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(23 18 31 / 0.85);
+  border: 1px solid rgb(177 140 255 / 0.5);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity 0.3s,
+    transform 0.45s var(--ease-out);
+}
+
+.dim-label.on {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    grid-template-columns: 1fr auto;
+  }
+  .title {
+    font-size: 22px;
+  }
+  .panel {
+    top: auto;
+    left: 16px;
+    right: 16px;
+    bottom: 76px;
+    width: auto;
+    max-height: 42%;
+  }
+}
+
+/* Positioned every frame by FloorLabel (scene/Blueprint.tsx) */
+.floor-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  will-change: transform;
+}

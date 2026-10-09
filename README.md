@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 1 (room and camera) complete. See [PLAN.md](PLAN.md).
+**Status:** Phase 2 (blueprint mode) complete. See [PLAN.md](PLAN.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -16,6 +16,17 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 | W A S D / arrow keys | Move around the room |
 | Q / E | Turn 90° to the next corner view |
 | R | Reset view |
+| B | Toggle blueprint mode |
+
+**Blueprint mode**
+| Input | Action |
+|---|---|
+| Drag the round handles | Resize the room (10 cm snapping; hold Shift for free) |
+| Panel → Window / Door, then click a wall | Add an opening |
+| Click an opening | Select it (edit width, height and sill in the panel) |
+| Drag an opening | Move it along a wall or onto another wall |
+| Delete / Backspace | Remove the selected opening |
+| Esc | Cancel placing → deselect → leave blueprint mode |
 
 ## Run locally
 ```bash

@@ -3,24 +3,49 @@ import { useRef } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
 import { sceneReady } from '../anim/intro'
 import { resetView, rotateQuarter } from '../scene/camera'
+import { useUi, type Mode } from '../store/uiStore'
+import BlueprintPanel from './BlueprintPanel'
+import ModeSwitch from './ModeSwitch'
 
 gsap.registerPlugin(SplitText)
 
+const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
+  view: [
+    { keys: ['Drag'], label: 'Orbit' },
+    { keys: ['Right-drag'], label: 'Pan' },
+    { keys: ['Scroll'], label: 'Zoom' },
+    { keys: ['W', 'A', 'S', 'D'], label: 'Move' },
+    { keys: ['Q', 'E'], label: 'Turn' },
+    { keys: ['B'], label: 'Blueprint' },
+  ],
+  blueprint: [
+    { keys: ['Drag handles'], label: 'Resize' },
+    { keys: ['Click'], label: 'Select' },
+    { keys: ['Drag'], label: 'Move opening' },
+    { keys: ['Shift'], label: 'No snap' },
+    { keys: ['Del'], label: 'Delete' },
+    { keys: ['Esc'], label: 'Back' },
+  ],
+}
+
 export default function Hud() {
   const root = useRef<HTMLDivElement>(null)
+  const mode = useUi((s) => s.mode)
+  const introDone = useRef(false)
 
   useGSAP(
     () => {
       // Each letter rises out of a mask; useGSAP reverts the split when the HUD unmounts.
       const split = SplitText.create('.title', { type: 'chars', mask: 'chars' })
       const tl = gsap
-        .timeline({ paused: true, delay: 0.5 })
+        .timeline({ paused: true, delay: 0.5, onComplete: () => void (introDone.current = true) })
         .from(split.chars, { yPercent: 110, duration: 0.9, ease: 'power4.out', stagger: 0.035 })
         .from('.subtitle', { opacity: 0, y: 8, duration: 0.6, ease: 'power2.out' }, '-=0.5')
+        .from('.mode-switch', { opacity: 0, y: -12, duration: 0.6, ease: 'power3.out' }, '-=0.4')
         // These land as the camera settles (the camera intro takes ~2.8s)
         .from('.dock > *', { opacity: 0, y: 20, duration: 0.7, ease: 'back.out(1.6)', stagger: 0.08 }, 1.9)
-      // Paused timelines still apply their "from" values, so the HUD stays hidden until then
-      // Guard against StrictMode's dev double-mount: the first, reverted timeline must not play
+      // Paused timelines still apply their "from" values, so the HUD stays hidden until then.
+      // Guard against StrictMode's dev double-mount: the first, reverted timeline must not play.
       let live = true
       sceneReady.then(() => {
         if (live) tl.play()
@@ -32,20 +57,36 @@ export default function Hud() {
     { scope: root },
   )
 
+  // Swap the hint chips with a quick stagger when the mode changes
+  useGSAP(
+    () => {
+      if (introDone.current) gsap.from('.hint', { opacity: 0, y: 6, duration: 0.35, ease: 'power2.out', stagger: 0.03 })
+    },
+    { dependencies: [mode], scope: root },
+  )
+
   return (
     <div className="hud" ref={root}>
-      <header>
-        <h1 className="title">Dream Setup</h1>
-        <p className="subtitle">Your room</p>
+      <header className="topbar">
+        <div>
+          <h1 className="title">Dream Setup</h1>
+          <p className="subtitle">Your room</p>
+        </div>
+        <ModeSwitch />
       </header>
+
+      <BlueprintPanel />
 
       <div className="dock">
         <div className="hints">
-          <Hint keys={['Drag']} label="Orbit" />
-          <Hint keys={['Right-drag']} label="Pan" />
-          <Hint keys={['Scroll']} label="Zoom" />
-          <Hint keys={['W', 'A', 'S', 'D']} label="Move" />
-          <Hint keys={['Q', 'E']} label="Turn" />
+          {HINTS[mode].map((h) => (
+            <span className="hint" key={mode + h.label}>
+              {h.keys.map((k) => (
+                <kbd key={k}>{k}</kbd>
+              ))}
+              <span>{h.label}</span>
+            </span>
+          ))}
         </div>
         <div className="cam-buttons">
           <button className="icon-btn" onClick={() => rotateQuarter(-1)} aria-label="Turn left (Q)" title="Turn left (Q)">
@@ -60,16 +101,5 @@ export default function Hud() {
         </div>
       </div>
     </div>
-  )
-}
-
-function Hint({ keys, label }: { keys: string[]; label: string }) {
-  return (
-    <span className="hint">
-      {keys.map((k) => (
-        <kbd key={k}>{k}</kbd>
-      ))}
-      <span>{label}</span>
-    </span>
   )
 }
