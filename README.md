@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 2 (blueprint mode) complete. See [PLAN.md](PLAN.md).
+**Status:** Phase 3 (catalog and placement) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -15,8 +15,22 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 | Scroll | Zoom |
 | W A S D / arrow keys | Move around the room |
 | Q / E | Turn 90° to the next corner view |
-| R | Reset view |
+| R | Reset view (in decorate mode: rotate the selected item) |
+| 1 / 2 / 3 | View / Decorate / Blueprint |
+| C | Toggle decorate mode |
 | B | Toggle blueprint mode |
+
+**Decorate mode**
+| Input | Action |
+|---|---|
+| Catalog card, then click | Place an item (floor, on top of furniture, on a wall or the ceiling, depending on the item) |
+| Shift + click | Place and keep the same item in hand |
+| R / Shift+R | Rotate 45° (the item in hand or the selected one) |
+| Click an item | Select it |
+| Drag an item | Move it, along with everything sitting on it |
+| Cmd/Ctrl + D | Duplicate the selected item |
+| Delete / Backspace | Remove the selected item (and what's on it) |
+| Esc | Cancel placing → deselect → back to view mode |
 
 **Blueprint mode**
 | Input | Action |

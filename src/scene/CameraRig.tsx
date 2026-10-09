@@ -3,11 +3,17 @@ import { useFrame } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import { Box3, Vector3 } from 'three'
 import { useGSAP } from '../anim/gsap'
-import { markReady, playIntro } from '../anim/intro'
+import { HOME, markReady, playIntro } from '../anim/intro'
 import { useRoom } from '../store/roomStore'
+import { useUi } from '../store/uiStore'
 import { registerControls, resetView, rotateQuarter } from './camera'
 
 const { ACTION } = CameraControlsImpl
+
+const itemInHand = () => {
+  const ui = useUi.getState()
+  return ui.mode === 'decorate' && (ui.carryItem !== null || ui.selectedItemId !== null)
+}
 const PAN_SPEED = 4 // metres per second
 
 // Movement keys by KeyboardEvent.code, which is layout-independent (WASD on AZERTY too).
@@ -33,20 +39,32 @@ export default function CameraRig() {
     ref.current.setBoundary(new Box3(new Vector3(-width / 2, 0, -depth / 2), new Vector3(width / 2, 1.5, depth / 2)))
   }, [width, depth])
 
-  const introTl = useRef<gsap.core.Timeline>(null)
   const framesRendered = useRef(0)
 
-  useGSAP(() => {
-    introTl.current = playIntro(ref.current)
+  // The intro is built only once a few frames have rendered: by then the canvas has its
+  // real size, so the camera's end distance (which depends on aspect ratio) is right.
+  // contextSafe ties the timeline to this component, so unmounting still reverts it.
+  const { contextSafe } = useGSAP()
+  const startIntro = contextSafe((controls: CameraControlsImpl) => {
+    playIntro(controls)
   })
+
+  // Until then, hold a far-off pose so the first frames don't flash a default view
+  useEffect(() => {
+    const c = ref.current
+    c.rotateTo(HOME.azimuth - 1.4, 0.3, false)
+    c.dollyTo(30, false)
+    c.enabled = false
+  }, [])
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (e.metaKey || e.ctrlKey) return // shortcuts like Cmd+D aren't movement
       if (e.code in MOVE) held.current.add(e.code)
       else if (e.code === 'KeyQ') rotateQuarter(-1)
       else if (e.code === 'KeyE') rotateQuarter(1)
-      else if (e.code === 'KeyR') resetView()
+      else if (e.code === 'KeyR' && !itemInHand()) resetView() // in decorate mode R rotates the item instead
     }
     const up = (e: KeyboardEvent) => held.current.delete(e.code)
     const clear = () => held.current.clear()
@@ -65,7 +83,7 @@ export default function CameraRig() {
   useFrame((_, delta) => {
     // A few rendered frames means the shader-compile stall is behind us
     if (framesRendered.current < 3 && ++framesRendered.current === 3) {
-      introTl.current?.play()
+      startIntro(ref.current)
       markReady()
     }
 

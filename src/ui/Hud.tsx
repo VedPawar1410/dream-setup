@@ -5,7 +5,9 @@ import { sceneReady } from '../anim/intro'
 import { resetView, rotateQuarter } from '../scene/camera'
 import { useUi, type Mode } from '../store/uiStore'
 import BlueprintPanel from './BlueprintPanel'
+import CatalogPanel from './CatalogPanel'
 import ModeSwitch from './ModeSwitch'
+import SelectionBar from './SelectionBar'
 
 gsap.registerPlugin(SplitText)
 
@@ -16,7 +18,16 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
     { keys: ['Scroll'], label: 'Zoom' },
     { keys: ['W', 'A', 'S', 'D'], label: 'Move' },
     { keys: ['Q', 'E'], label: 'Turn' },
+    { keys: ['C'], label: 'Decorate' },
     { keys: ['B'], label: 'Blueprint' },
+  ],
+  decorate: [
+    { keys: ['Click'], label: 'Select' },
+    { keys: ['Drag'], label: 'Move item' },
+    { keys: ['R'], label: 'Rotate' },
+    { keys: ['Shift', 'Click'], label: 'Place more' },
+    { keys: ['Del'], label: 'Delete' },
+    { keys: ['Esc'], label: 'Back' },
   ],
   blueprint: [
     { keys: ['Drag handles'], label: 'Resize' },
@@ -76,7 +87,8 @@ export default function Hud() {
       </header>
 
       <BlueprintPanel />
-
+      <CatalogPanel />
+      <SelectionBar />
       <div className="dock">
         <div className="hints">
           {HINTS[mode].map((h) => (

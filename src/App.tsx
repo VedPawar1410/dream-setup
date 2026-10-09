@@ -1,5 +1,6 @@
 import { Canvas } from '@react-three/fiber'
 import { select } from './scene/blueprintActions'
+import { selectItem } from './scene/decorateActions'
 import Experience from './scene/Experience'
 import { useUi } from './store/uiStore'
 import Hud from './ui/Hud'
@@ -21,7 +22,9 @@ export default function App() {
         }}
         // A click that hits nothing interactive (and wasn't a drag) clears the selection
         onPointerMissed={() => {
-          if (!useUi.getState().carry) select(null)
+          const ui = useUi.getState()
+          if (!ui.carry) select(null)
+          if (!ui.carryItem) selectItem(null)
         }}
       >
         <Experience />

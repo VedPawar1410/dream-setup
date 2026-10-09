@@ -1,9 +1,12 @@
 import { gsap } from '../anim/gsap'
 import { intro } from '../anim/intro'
+import { itemSizes } from '../catalog/models'
+import { openingHitsWallItems } from '../store/itemRules'
 import { useRoom, type Opening, type WallSide } from '../store/roomStore'
 import { isValidOpening, offsetLimit, OPENING_DEFAULTS } from '../store/rules'
 import { useUi, type Mode } from '../store/uiStore'
 import { setBlueprintView, setCameraLocked } from './camera'
+import { cancelItemCarry } from './decorateActions'
 import { openingObjects } from './sceneRefs'
 
 // Editor actions shared by the 3D scene, the HUD and the keyboard. Plain functions
@@ -16,8 +19,10 @@ export function setMode(mode: Mode) {
   // Mode switches move the camera, which would fight the intro's swoop
   if (ui.mode === mode || !intro.done) return
   if (ui.carry) cancelCarry()
-  useUi.setState({ mode, selectedId: null })
-  setBlueprintView(mode === 'blueprint')
+  if (ui.carryItem) cancelItemCarry()
+  useUi.setState({ mode, selectedId: null, selectedItemId: null })
+  // Only blueprint has its own camera angle; view ↔ decorate keeps yours
+  if (mode === 'blueprint' || ui.mode === 'blueprint') setBlueprintView(mode === 'blueprint')
 }
 
 export const toggleBlueprint = () => setMode(useUi.getState().mode === 'blueprint' ? 'view' : 'blueprint')
@@ -45,7 +50,11 @@ export function hoverWall(wall: WallSide, rawOffset: number, free: boolean) {
   const shell = useRoom.getState().doc.shell
   const limit = offsetLimit(shell, wall, carry.item.width)
   const offset = limit < 0 ? 0 : Math.min(limit, Math.max(-limit, free ? rawOffset : snap(rawOffset, 0.05)))
-  const valid = limit >= 0 && isValidOpening(shell, { ...carry.item, wall, offset })
+  const candidate = { ...carry.item, wall, offset }
+  const valid =
+    limit >= 0 &&
+    isValidOpening(shell, candidate) &&
+    !openingHitsWallItems(candidate, useRoom.getState().doc.items, (id) => itemSizes.get(id))
   useUi.setState({ ghost: { wall, offset, valid } })
 }
 

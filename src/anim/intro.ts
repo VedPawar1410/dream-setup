@@ -1,5 +1,4 @@
 import type { CameraControlsImpl } from '@react-three/drei'
-import type { PerspectiveCamera } from 'three'
 import { useRoom } from '../store/roomStore'
 import { gsap } from './gsap'
 
@@ -21,15 +20,12 @@ export const HOME = { azimuth: Math.PI / 4, polar: 1.0 }
 /**
  * Home distance depends on the screen: a portrait phone needs the camera much further
  * back than a wide monitor. Fitting the room's bounding sphere covers both FOVs and
- * every orbit angle. On landscape screens we trim the sphere's slack (the room's corners
- * never all touch the screen edges at once); on portrait the room's diagonal spans the
- * narrow width, so it needs the full fit.
+ * every orbit angle. The extra 15% leaves breathing room for the HUD at the top and bottom.
  */
 export function homeDistance(controls: CameraControlsImpl) {
   const { width, depth, height } = useRoom.getState().doc.shell
   const radius = Math.hypot(width, depth, height) / 2
-  const camera = controls.camera as PerspectiveCamera
-  return controls.getDistanceToFitSphere(radius) * (camera.aspect < 1 ? 1 : 0.85)
+  return controls.getDistanceToFitSphere(radius) * 1.15
 }
 
 // The first frames stall while the GPU compiles shaders. A timeline started on mount
@@ -50,7 +46,6 @@ export function playIntro(controls: CameraControlsImpl) {
   controls.enabled = false
 
   const tl = gsap.timeline({
-    paused: true,
     onComplete: () => {
       controls.enabled = true
       intro.done = true

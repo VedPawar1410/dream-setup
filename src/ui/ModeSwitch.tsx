@@ -10,11 +10,18 @@ const MODES: { id: Mode; label: string; icon: React.ReactNode }[] = [
     icon: <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />,
   },
   {
+    id: 'decorate',
+    label: 'Decorate',
+    icon: <path d="M4 18v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5M6 11V8a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v3M4 18h16M6 18v2m12-2v2" />,
+  },
+  {
     id: 'blueprint',
     label: 'Blueprint',
     icon: <path d="M3 3h18v18H3zM3 9h6m4 0h8M9 3v12m0 4v2m4-12v12" />,
   },
 ]
+
+const KEYS: Record<Mode, string> = { view: '1', decorate: '2 or C', blueprint: '3 or B' }
 
 export default function ModeSwitch() {
   const mode = useUi((s) => s.mode)
@@ -46,7 +53,7 @@ export default function ModeSwitch() {
           role="tab"
           aria-selected={mode === m.id}
           onClick={() => setMode(m.id)}
-          title={m.id === 'blueprint' ? 'Blueprint (B)' : 'View (B)'}
+          title={`${m.label} (${KEYS[m.id]})`}
         >
           <svg viewBox="0 0 24 24">{m.icon}</svg>
           {m.label}
