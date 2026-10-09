@@ -17,9 +17,13 @@ import type { ProceduralId } from './catalog'
 
 const ACCENT = '#b18cff'
 
+// Materials whose look comes from a picture or transparency, not a colour you'd pick
+const FIXED = new Set(['glass', 'screen', 'art'])
+
 function mat(name: string, params: MeshStandardMaterialParameters) {
   const m = new MeshStandardMaterial({ roughness: 0.55, ...params })
   m.name = name
+  if (FIXED.has(name)) m.userData.noRecolor = true
   return m
 }
 

@@ -1,5 +1,5 @@
 import { gsap } from '../anim/gsap'
-import { useRoom } from '../store/roomStore'
+import { useRoom, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { setCameraLocked } from './camera'
 import { candidateFields, candidateOf, isValid, placement, subtree, worldYaw } from './placementSolver'
@@ -14,9 +14,9 @@ const findItem = (id: string | null) => (id ? useRoom.getState().doc.items.find(
 
 export const selectItem = (id: string | null) => useUi.setState({ selectedItemId: id })
 
-export function startPlacing(catalogId: string, rot = 0) {
+export function startPlacing(catalogId: string, rot = 0, colors?: Record<string, string>) {
   placement.candidate = null
-  useUi.setState({ carryItem: { catalogId, itemId: null, rot }, selectedItemId: null })
+  useUi.setState({ carryItem: { catalogId, itemId: null, rot, colors }, selectedItemId: null })
 }
 
 export function startMovingItem(id: string) {
@@ -25,7 +25,7 @@ export function startMovingItem(id: string) {
   const obj = itemObjects.get(id)
   placement.candidate = null
   // Carry it at its current on-screen angle, even if it was sitting on a rotated parent
-  useUi.setState({ carryItem: { catalogId: item.catalogId, itemId: id, rot: obj ? worldYaw(obj) : item.rot }, selectedItemId: id })
+  useUi.setState({ carryItem: { catalogId: item.catalogId, itemId: id, rot: obj ? worldYaw(obj) : item.rot, colors: item.colors }, selectedItemId: id })
   setCameraLocked(true)
 }
 
@@ -45,7 +45,7 @@ export function commitPlacement(keep = false): boolean {
   const id = carryItem.itemId ?? crypto.randomUUID()
   const fields = candidateFields(candidate)
   if (carryItem.itemId) room.updateItem(id, fields)
-  else room.addItem({ id, catalogId: carryItem.catalogId, ...fields })
+  else room.addItem({ id, catalogId: carryItem.catalogId, ...fields, colors: carryItem.colors })
 
   if (keep && !carryItem.itemId) return true // same item stays in hand
   placement.candidate = null
@@ -92,7 +92,21 @@ export function duplicateSelected() {
   const { selectedItemId } = useUi.getState()
   const item = findItem(selectedItemId)
   const obj = selectedItemId ? itemObjects.get(selectedItemId) : undefined
-  if (item) startPlacing(item.catalogId, obj ? worldYaw(obj) : item.rot)
+  if (item) startPlacing(item.catalogId, obj ? worldYaw(obj) : item.rot, item.colors)
+}
+
+export function setItemColor(id: string, slot: string, hex: string) {
+  const item = findItem(id)
+  if (item) useRoom.getState().updateItem(id, { colors: { ...item.colors, [slot]: hex } })
+}
+
+export function resetItemColors(id: string) {
+  useRoom.getState().updateItem(id, { colors: undefined })
+}
+
+/** Choose which wall(s) the Room panel paints; selecting a wall also shows the walls tab. */
+export function setPaintTarget(target: WallSide | 'all') {
+  useUi.setState({ paintTarget: target, roomTab: 'walls', selectedItemId: null })
 }
 
 // Pressing on an item: release without moving selects it; moving first picks it up.

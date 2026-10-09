@@ -1,11 +1,14 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import { MathUtils, Plane, Vector3, type Group, type Mesh } from 'three'
+import { MathUtils, Plane, Vector3, type Group, type Mesh, type MeshStandardMaterial } from 'three'
+import { gsap, useGSAP } from '../anim/gsap'
 import { intro } from '../anim/intro'
-import { useRoom, type Opening, type PlacedItem, type WallSide } from '../store/roomStore'
+import { useRoom, type FloorFinish, type Opening, type PlacedItem, type WallFinish, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { drop, hoverWall } from './blueprintActions'
-import { FLOOR_T, THICKNESS } from './dimensions'
+import { setPaintTarget } from './decorateActions'
+import { ACCENT, FLOOR_T, THICKNESS } from './dimensions'
+import { FLOOR_MATERIALS, FLOOR_TILE, floorTexture, WALL_PATTERNS, wallTexture } from './surfaces'
 import { ItemList, Placement } from './Items'
 import { OpeningView, type WallPointer } from './Openings'
 import { clippedRaycast, noRaycast, room, wallCut, wallGroups, wallMeshes } from './sceneRefs'
@@ -117,11 +120,7 @@ export default function RoomShell() {
         <boxGeometry args={[width + 2 * THICKNESS + 0.3, 0.24, depth + 2 * THICKNESS + 0.3]} />
         <meshStandardMaterial color={BASE_COLOR} roughness={0.9} />
       </mesh>
-      {/* Floor slab runs under the walls, so wall bases sink into it */}
-      <mesh position={[0, -FLOOR_T / 2, 0]} receiveShadow>
-        <boxGeometry args={[width + 2 * THICKNESS, FLOOR_T, depth + 2 * THICKNESS]} />
-        <meshStandardMaterial color={shell.floorColor} roughness={0.55} />
-      </mesh>
+      <FloorSlab width={width + 2 * THICKNESS} depth={depth + 2 * THICKNESS} finish={shell.floor} />
 
       {/* Invisible ceiling: draws no colour or depth, but still renders into the shadow
           map. Without it the open-topped room lets the sun in over the walls; with it,
@@ -136,7 +135,7 @@ export default function RoomShell() {
           key={w.side}
           layout={w}
           height={height}
-          color={shell.wallColor}
+          finish={shell.walls[w.side]}
           openings={perWall[i]}
           ghost={ghostOpening?.opening.wall === w.side ? ghostOpening : null}
           items={wallItems[i]}
@@ -150,19 +149,59 @@ export default function RoomShell() {
   )
 }
 
+/** The floor slab runs under the walls, so wall bases sink into it. */
+function FloorSlab({ width, depth, finish }: { width: number; depth: number; finish: FloorFinish }) {
+  // The box's top face spans UV 0..1, so the texture repeats once per FLOOR_TILE metres.
+  // Each size needs its own repeat, hence a clone (clones share the image, not the GPU upload settings).
+  const map = useMemo(() => {
+    const t = floorTexture(finish.material).clone()
+    t.repeat.set(width / FLOOR_TILE, depth / FLOOR_TILE)
+    t.needsUpdate = true
+    return t
+  }, [finish.material, width, depth])
+  useEffect(() => () => map.dispose(), [map])
+  const roughness = FLOOR_MATERIALS.find((m) => m.id === finish.material)?.roughness ?? 0.6
+
+  return (
+    <mesh position={[0, -FLOOR_T / 2, 0]} receiveShadow>
+      <boxGeometry args={[width, FLOOR_T, depth]} />
+      <meshStandardMaterial map={map} color={finish.color} roughness={roughness} />
+    </mesh>
+  )
+}
+
 type WallProps = {
   layout: WallLayout
   height: number
-  color: string
+  finish: WallFinish
   openings: Opening[]
   ghost: GhostOpening | null
   items: PlacedItem[]
   clip: Plane[]
 }
 
-function Wall({ layout, height, color, openings, ghost, items, clip }: WallProps) {
+function Wall({ layout, height, finish, openings, ghost, items, clip }: WallProps) {
   const group = useRef<Group>(null!)
   const body = useRef<Mesh>(null!)
+  const material = useRef<MeshStandardMaterial>(null!)
+  const map = wallTexture(finish.pattern)
+  const roughness = WALL_PATTERNS.find((p) => p.id === finish.pattern)?.roughness ?? 0.85
+
+  // Flash the wall(s) you just picked to paint, so it's obvious which one is targeted
+  const paintTarget = useUi((s) => s.paintTarget)
+  const firstTarget = useRef(true)
+  useGSAP(
+    () => {
+      if (firstTarget.current) {
+        firstTarget.current = false
+        return
+      }
+      if (paintTarget === layout.side || paintTarget === 'all') {
+        gsap.fromTo(material.current, { emissiveIntensity: 0.45 }, { emissiveIntensity: 0, duration: 0.9, ease: 'power2.out' })
+      }
+    },
+    { dependencies: [paintTarget] },
+  )
 
   // The placement solver raycasts wall bodies and positions wall items in the wall's frame
   useEffect(() => {
@@ -207,9 +246,18 @@ function Wall({ layout, height, color, openings, ghost, items, clip }: WallProps
         hoverWall(layout.side, x, e.nativeEvent.shiftKey)
       },
       onClick: (e) => {
+        const ui = useUi.getState()
         // e.delta is how far the pointer travelled since pointerdown: a drag that orbited
-        // the camera shouldn't also place a window.
-        if (!useUi.getState().carry?.isNew || e.delta > 6 || !targetable()) return
+        // the camera shouldn't count as a click.
+        if (ui.mode === 'decorate') {
+          // Clicking a wall picks it for painting, unless an item or opening in front took the click
+          const inFront = e.intersections[0]?.eventObject !== e.eventObject
+          if (ui.carryItem || e.delta > 6 || wallCut[layout.side] >= 0.5 || inFront) return
+          e.stopPropagation()
+          setPaintTarget(layout.side)
+          return
+        }
+        if (!ui.carry?.isNew || e.delta > 6 || !targetable()) return
         e.stopPropagation()
         drop()
       },
@@ -221,7 +269,19 @@ function Wall({ layout, height, color, openings, ghost, items, clip }: WallProps
       {/* clipShadows stays off on purpose: a cut-away wall still casts its full shadow,
           so the room's lighting doesn't change as you orbit. */}
       <mesh ref={body} geometry={geometry} castShadow receiveShadow raycast={raycast} {...pointer}>
-        <meshStandardMaterial color={color} roughness={0.85} clippingPlanes={clip} />
+        {/* Keyed by pattern: adding or removing a texture map needs a different shader,
+            so the material is remade rather than patched. Wall UVs come straight from the
+            2D outline (metres), so one texture tile is exactly one metre of wall. */}
+        <meshStandardMaterial
+          key={finish.pattern}
+          ref={material}
+          map={map}
+          color={finish.color}
+          roughness={roughness}
+          emissive={ACCENT}
+          emissiveIntensity={0}
+          clippingPlanes={clip}
+        />
       </mesh>
       {/* Cross-section cap: once the top is clipped you'd see into the hollow wall shape,
           where the floor slab and skirting z-fight. A flat lid that rides at the clip
