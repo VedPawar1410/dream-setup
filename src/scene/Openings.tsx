@@ -9,6 +9,7 @@ import { startMoving } from './blueprintActions'
 import { setCameraLocked } from './camera'
 import { ACCENT, DANGER } from './dimensions'
 import { clippedRaycast, noRaycast, openingObjects } from './sceneRefs'
+import { makeWindowMaterial } from './windowView'
 
 const FRAME = 0.06 // frame bar thickness
 const FRAME_COLOR = '#f7f3ee'
@@ -114,18 +115,25 @@ function Window({ opening: o, thickness, clip, tint }: PartProps) {
         <boxGeometry args={[FRAME * 0.6, o.height - FRAME, FRAME * 0.8]} />
         <meshStandardMaterial color={color} roughness={0.5} clippingPlanes={clip} />
       </mesh>
-      {/* Glass casts no shadow so sunlight falls through. It skips depth writes so
-          ambient occlusion doesn't treat it as a solid surface. */}
-      <mesh>
-        <planeGeometry args={[o.width - FRAME, o.height - FRAME]} />
-        <meshStandardMaterial color="#cfe6ff" transparent opacity={0.12} roughness={0.05} depthWrite={false} clippingPlanes={clip} />
-      </mesh>
+      {/* The glass shows the outdoor view (see windowView.ts). It casts no shadow, so
+          sunlight still falls through onto the floor. */}
+      <WindowGlass width={o.width - FRAME} height={o.height - FRAME} clip={clip} />
       {/* Sill */}
       <mesh position={[0, -o.height / 2 - 0.02, thickness / 2]} castShadow receiveShadow>
         <boxGeometry args={[o.width + 0.16, 0.04, 0.16]} />
         <meshStandardMaterial color={color} roughness={0.5} clippingPlanes={clip} />
       </mesh>
     </>
+  )
+}
+
+function WindowGlass({ width, height, clip }: { width: number; height: number; clip: Plane[] }) {
+  const material = useMemo(() => makeWindowMaterial(width / height, clip), [width, height, clip])
+  useEffect(() => () => material.dispose(), [material])
+  return (
+    <mesh material={material}>
+      <planeGeometry args={[width, height]} />
+    </mesh>
   )
 }
 

@@ -1,4 +1,4 @@
-import { Mesh, type Intersection, type Object3D, type Plane, type Raycaster } from 'three'
+import { Mesh, type Intersection, type MeshStandardMaterial, type Object3D, type Plane, type Raycaster } from 'three'
 import type { WallSide } from '../store/roomStore'
 
 // Live scene objects that non-React code (the placement solver, editor actions) needs
@@ -17,6 +17,9 @@ export const wallGroups = new Map<WallSide, Object3D>()
 /** Each placed item's frame (origin at its bottom-centre) and the inner group GSAP animates. */
 export const itemObjects = new Map<string, Object3D>()
 export const itemAnims = new Map<string, Object3D>()
+
+/** Every placed item's RGB material, for the rainbow cycle. Items add theirs on mount. */
+export const rgbMaterials = new Set<MeshStandardMaterial>()
 
 /** The room's root group. Placement maths happens in its space. */
 export const room: { group: Object3D | null } = { group: null }

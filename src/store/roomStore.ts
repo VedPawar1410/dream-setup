@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { itemSizes } from '../catalog/models'
+import type { Weather } from '../scene/atmosphere'
 import type { FloorMaterial, WallPattern } from '../scene/surfaces'
 import { itemMinRoom, openingHitsWallItems, type SizeOf } from './itemRules'
 import { clampSize, isValidOpening } from './rules'
@@ -41,6 +42,8 @@ export type PlacedItem = {
   wall?: { side: WallSide; along: number; y: number }
   /** Colour overrides by material name ("wood", "carpet"…). Missing slots keep the model's colour. */
   colors?: Record<string, string>
+  /** Lamps and electronics: switched off when false (on by default). */
+  on?: boolean
 }
 
 export type WallFinish = { pattern: WallPattern; color: string }
@@ -57,6 +60,7 @@ export type RoomDoc = {
     openings: Opening[]
   }
   items: PlacedItem[]
+  atmosphere: { weather: Weather; rgbCycle: boolean }
 }
 
 export type Shell = RoomDoc['shell']
@@ -96,7 +100,9 @@ export const defaultRoom: RoomDoc = {
     { id: 'books-1', catalogId: 'books', x: -0.15, z: 0, rot: 0, parentId: 'shelf-1' },
     { id: 'succulent-1', catalogId: 'plantSmall2', x: 0.22, z: 0, rot: 0, parentId: 'shelf-1' },
     { id: 'poster-1', catalogId: 'posterSunset', x: 0, z: 0, rot: 0, parentId: null, wall: { side: 'west', along: -0.85, y: 1.15 } },
+    { id: 'led-1', catalogId: 'ledStrip', x: 0, z: 0, rot: 0, parentId: null, wall: { side: 'north', along: 0.7, y: 2.3 } },
   ],
+  atmosphere: { weather: 'sunny', rgbCycle: false },
 }
 
 const sizeOf: SizeOf = (id) => itemSizes.get(id)
@@ -118,6 +124,9 @@ type RoomState = {
   removeItem: (id: string) => void
   setWallFinish: (target: WallSide | 'all', patch: Partial<WallFinish>) => void
   setFloor: (patch: Partial<FloorFinish>) => void
+  setWeather: (weather: Weather) => void
+  setRgbCycle: (on: boolean) => void
+  togglePower: (id: string) => void
 }
 
 const SIDES: WallSide[] = ['north', 'east', 'south', 'west']
@@ -189,6 +198,15 @@ export const useRoom = create<RoomState>((set, get) => {
     setFloor: (patch) => {
       const shell = get().doc.shell
       setShell({ ...shell, floor: { ...shell.floor, ...patch } })
+    },
+
+    setWeather: (weather) => set({ doc: { ...get().doc, atmosphere: { ...get().doc.atmosphere, weather } } }),
+
+    setRgbCycle: (rgbCycle) => set({ doc: { ...get().doc, atmosphere: { ...get().doc.atmosphere, rgbCycle } } }),
+
+    togglePower: (id) => {
+      const item = get().doc.items.find((it) => it.id === id)
+      if (item) setItems(get().doc.items.map((it) => (it.id === id ? { ...it, on: item.on === false } : it)))
     },
   }
 })

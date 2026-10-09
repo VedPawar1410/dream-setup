@@ -145,6 +145,14 @@ function wallShelf() {
   return g
 }
 
+function ledStrip() {
+  const g = new Group()
+  // A slim aluminium channel with a diffuser that glows bright enough to bloom
+  box(g, 1.2, 0.03, 0.02, mat('case', { color: '#2a2730', roughness: 0.4, metalness: 0.6 }), 0, 0.015, -0.004)
+  box(g, 1.18, 0.012, 0.012, mat('rgb', { color: ACCENT, emissive: ACCENT, emissiveIntensity: 3.5 }), 0, 0.015, 0.008)
+  return g
+}
+
 type Draw = (ctx: CanvasRenderingContext2D, w: number, h: number) => void
 
 function poster(key: string, draw: Draw) {
@@ -225,5 +233,7 @@ export function buildProcedural(id: ProceduralId): Group {
       return poster('ocean', drawOcean)
     case 'posterShapes':
       return poster('shapes', drawShapes)
+    case 'ledStrip':
+      return ledStrip()
   }
 }

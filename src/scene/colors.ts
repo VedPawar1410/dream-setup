@@ -74,8 +74,10 @@ export function applyColors(root: Object3D, colors: Record<string, string> | und
     if (glow) {
       const light = hex ? tmp.set(hex) : glow
       mat.emissive.copy(light)
-      // looks.ts restores emissive from its own snapshot, so keep that in step
+      // looks.ts restores emissive from its own snapshot, so keep that in step, and the
+      // RGB cycle returns here when it stops
       mat.userData.base?.emissive.copy(light)
+      mat.userData.rgbRest = light.clone()
     } else {
       mat.color.copy(hex ? tmp.set(hex) : mat.userData.baseColor)
     }
