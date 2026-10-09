@@ -80,6 +80,9 @@ export function captureThumbnail(width = 360, height = 225): string | null {
   return out.toDataURL('image/jpeg', 0.78)
 }
 
+/** The full-resolution frame as a PNG, for photo mode. */
+export const captureFrame = () => (source && source.width ? source.toDataURL('image/png') : null)
+
 // ---------- Boot + autosave ----------
 
 let applying = false // true while we load a room, so loading doesn't count as an edit

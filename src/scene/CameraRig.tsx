@@ -88,7 +88,7 @@ export default function CameraRig() {
     }
 
     const controls = ref.current
-    if (!controls.enabled || held.current.size === 0) return
+    if (!controls.enabled || held.current.size === 0 || useUi.getState().firstPerson) return
     let x = 0
     let z = 0
     for (const code of held.current) {

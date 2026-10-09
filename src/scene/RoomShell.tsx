@@ -51,6 +51,7 @@ export default function RoomShell() {
   const carry = useUi((s) => s.carry)
   const ghost = useUi((s) => s.ghost)
   const carriedItemId = useUi((s) => s.carryItem?.itemId ?? null)
+  const firstPerson = useUi((s) => s.firstPerson)
   const { width, depth, height } = shell
   const group = useRef<Group>(null!)
 
@@ -103,9 +104,11 @@ export default function RoomShell() {
     // The plane rests a little above the wall top: exactly at the top face, floating-point
     // precision clips random pixels along the edge.
     const fullHeight = height + 0.05
+    const seated = useUi.getState().firstPerson
     toCamera.set(camera.position.x, 0, camera.position.z).normalize()
     walls.forEach((w, i) => {
-      const target = w.outward.dot(toCamera) > 0.25 ? 1 : 0
+      // Seated in first person you're inside the room: every wall stays up
+      const target = !seated && w.outward.dot(toCamera) > 0.25 ? 1 : 0
       cut.current[i] = MathUtils.damp(cut.current[i], target, 7, delta)
       wallCut[w.side] = cut.current[i]
       const visibleHeight = MathUtils.lerp(fullHeight, CUT_HEIGHT, cut.current[i])
@@ -142,6 +145,12 @@ export default function RoomShell() {
           clip={clips[i]}
         />
       ))}
+
+      {/* A real ceiling when you're inside the room (the dollhouse view has none) */}
+      <mesh visible={firstPerson} position={[0, height, 0]} rotation-x={Math.PI / 2} raycast={noRaycast}>
+        <planeGeometry args={[width, depth]} />
+        <meshStandardMaterial color={shell.walls.north.color} roughness={0.95} />
+      </mesh>
 
       <ItemList items={rootItems} />
       <Placement />

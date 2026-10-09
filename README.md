@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 6 (saves) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
+**Status:** Phase 7 (first-person and photo mode) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -17,6 +17,8 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 | Q / E | Turn 90° to the next corner view |
 | R | Reset view (in decorate mode: rotate the selected item) |
 | 1 / 2 / 3 | View / Decorate / Blueprint |
+| F | Sit at your desk (first person) |
+| P | Photo mode |
 | C | Toggle decorate mode |
 | B | Toggle blueprint mode |
 
@@ -45,6 +47,14 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 **Saving (automatic)**
 - Your room saves itself in this browser a moment after every change (IndexedDB; nothing leaves your machine).
 - Click the room name under the title, or press **M**, for **My rooms**: open, rename (double-click), duplicate or delete rooms, start a new or empty room, and export/import a room as a `.dreamroom.json` file.
+
+**Sit at your desk (F)**
+- The camera flies down to the first chair it finds (your desk chair, if you have one) and you look around from eye height. Drag to turn your head; **Esc** or **F** stands you back up.
+
+**Photo mode (P)**
+- The HUD slides away and a photo bar appears: six filters (Natural, Warm, Cool, Mono, Vintage, Dreamy), a **Blur** slider for depth of field, and a shutter.
+- Click anything in the scene to focus on it. The shutter flashes and shows a polaroid of the shot, which you can **Download** as a PNG.
+- Works from the dollhouse view or while seated. **Done** or **Esc** leaves.
 
 **Blueprint mode**
 | Input | Action |
