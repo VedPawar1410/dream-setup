@@ -730,3 +730,311 @@ kbd {
     bottom: 80px;
   }
 }
+
+/* ---------- Phase 4: inspector, colour picker, finishes ---------- */
+
+.inspector {
+  width: 284px;
+}
+
+.panel-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-dim);
+}
+
+.slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slot {
+  border-radius: 14px;
+  border: 1px solid transparent;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.slot.open {
+  background: rgb(255 255 255 / 0.04);
+  border-color: var(--glass-border);
+}
+
+.slot-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.slot-row:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.slot-swatch {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 7px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.25),
+    0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+.slot-label {
+  flex: 1;
+}
+
+.slot-hex,
+.hex-field {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+
+.slot .picker {
+  padding: 4px 10px 12px;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Saturation left→right, value top→bottom, over the hue colour set inline */
+.sv {
+  position: relative;
+  height: 128px;
+  border-radius: 12px;
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.sv-thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hue {
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  margin: 0;
+  border-radius: 999px;
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  cursor: pointer;
+}
+
+.hue::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+  box-shadow: 0 1px 5px rgb(0 0 0 / 0.5);
+}
+
+.hue::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.picker-chip {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.25);
+}
+
+.hex-field {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgb(255 255 255 / 0.06);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.hex-field:focus {
+  border-color: var(--accent);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.swatch-btn {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+  transition: transform 0.25s var(--ease-out);
+}
+
+.swatch-btn:hover {
+  transform: scale(1.12);
+}
+
+.swatch-btn.active {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.2),
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--accent);
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.seg-btn {
+  padding: 7px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+
+.seg-btn.active {
+  background: rgb(177 140 255 / 0.25);
+  color: var(--ink);
+}
+
+.targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.patterns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pattern {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 5px 5px 7px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.3s var(--ease-out),
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.pattern:hover {
+  transform: translateY(-2px);
+  color: var(--ink);
+}
+
+.pattern.active {
+  border-color: var(--accent);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px rgb(177 140 255 / 0.15);
+}
+
+/* The same multiply the 3D material does: colour × greyscale pattern */
+.pattern-img {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background-size: 200%;
+  background-blend-mode: multiply;
+}
+
+.ghost-btn {
+  padding: 9px;
+  border-radius: 12px;
+  border: 1px dashed var(--glass-border);
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.ghost-btn:hover {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+.slot-row:focus-visible,
+.seg-btn:focus-visible,
+.pattern:focus-visible,
+.swatch-btn:focus-visible,
+.ghost-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  /* The catalog is the bottom sheet in decorate mode, so the inspector drops in from the top */
+  .inspector {
+    top: 76px;
+    bottom: auto;
+    max-height: 38%;
+  }
+}

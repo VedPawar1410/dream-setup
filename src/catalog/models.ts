@@ -1,4 +1,4 @@
-import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3, type Object3D } from 'three'
+import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3, type Material, type Object3D } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import type { CatalogItem } from './catalog'
 import { buildProcedural } from './procedural'
@@ -66,9 +66,15 @@ function normalize(model: Object3D, scale: number, yaw: number): Prototype {
 /** A placed copy with its own materials, so tinting or recolouring one never touches another. */
 export function instantiate(proto: Prototype): Object3D {
   const clone = proto.object.clone(true)
+  const copy = (mat: Material) => {
+    const c = mat.clone() as MeshStandardMaterial
+    // Remember what glowed originally (RGB, screens) before any highlight tints the emissive
+    c.userData.glow = c.emissive && c.emissive.getHex() !== 0 ? c.emissive.clone() : null
+    return c
+  }
   clone.traverse((o) => {
     const mesh = o as Mesh
-    if (mesh.isMesh) mesh.material = Array.isArray(mesh.material) ? mesh.material.map((mat) => mat.clone()) : mesh.material.clone()
+    if (mesh.isMesh) mesh.material = Array.isArray(mesh.material) ? mesh.material.map(copy) : copy(mesh.material)
   })
   return clone
 }

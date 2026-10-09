@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { itemSizes } from '../catalog/models'
+import type { FloorMaterial, WallPattern } from '../scene/surfaces'
 import { itemMinRoom, openingHitsWallItems, type SizeOf } from './itemRules'
 import { clampSize, isValidOpening } from './rules'
 
@@ -38,7 +39,12 @@ export type PlacedItem = {
   parentId: string | null
   /** Wall-mounted items: which wall, how far along it (wall-local x), and bottom edge height. */
   wall?: { side: WallSide; along: number; y: number }
+  /** Colour overrides by material name ("wood", "carpet"…). Missing slots keep the model's colour. */
+  colors?: Record<string, string>
 }
+
+export type WallFinish = { pattern: WallPattern; color: string }
+export type FloorFinish = { material: FloorMaterial; color: string }
 
 export type RoomDoc = {
   version: 1
@@ -46,8 +52,8 @@ export type RoomDoc = {
     width: number // x, metres
     depth: number // z, metres
     height: number
-    wallColor: string
-    floorColor: string
+    walls: Record<WallSide, WallFinish>
+    floor: FloorFinish
     openings: Opening[]
   }
   items: PlacedItem[]
@@ -61,8 +67,13 @@ export const defaultRoom: RoomDoc = {
     width: 5,
     depth: 4,
     height: 2.6,
-    wallColor: '#efe6dc',
-    floorColor: '#b98a62',
+    walls: {
+      north: { pattern: 'paint', color: '#efe6dc' },
+      east: { pattern: 'paint', color: '#efe6dc' },
+      south: { pattern: 'paint', color: '#efe6dc' },
+      west: { pattern: 'paint', color: '#efe6dc' },
+    },
+    floor: { material: 'planks', color: '#c8956a' },
     openings: [
       { id: 'win-1', kind: 'window', wall: 'north', offset: 0.7, width: 1.5, height: 1.3, sill: 0.85 },
       { id: 'door-1', kind: 'door', wall: 'west', offset: 0.9, width: 0.9, height: 2.1, sill: 0 },
@@ -105,7 +116,11 @@ type RoomState = {
   updateItem: (id: string, patch: Partial<Omit<PlacedItem, 'id' | 'catalogId'>>) => void
   /** Removes the item and everything sitting on it. */
   removeItem: (id: string) => void
+  setWallFinish: (target: WallSide | 'all', patch: Partial<WallFinish>) => void
+  setFloor: (patch: Partial<FloorFinish>) => void
 }
+
+const SIDES: WallSide[] = ['north', 'east', 'south', 'west']
 
 export const useRoom = create<RoomState>((set, get) => {
   // Always replace, never mutate: Zustand selectors compare by reference, so a new
@@ -162,6 +177,18 @@ export const useRoom = create<RoomState>((set, get) => {
         }
       }
       setItems(items.filter((it) => !gone.has(it.id)))
+    },
+
+    setWallFinish: (target, patch) => {
+      const shell = get().doc.shell
+      const walls = { ...shell.walls }
+      for (const side of target === 'all' ? SIDES : [target]) walls[side] = { ...walls[side], ...patch }
+      setShell({ ...shell, walls })
+    },
+
+    setFloor: (patch) => {
+      const shell = get().doc.shell
+      setShell({ ...shell, floor: { ...shell.floor, ...patch } })
     },
   }
 })

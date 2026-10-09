@@ -6,6 +6,7 @@ import { resetView, rotateQuarter } from '../scene/camera'
 import { useUi, type Mode } from '../store/uiStore'
 import BlueprintPanel from './BlueprintPanel'
 import CatalogPanel from './CatalogPanel'
+import Inspector from './Inspector'
 import ModeSwitch from './ModeSwitch'
 import SelectionBar from './SelectionBar'
 
@@ -88,6 +89,7 @@ export default function Hud() {
 
       <BlueprintPanel />
       <CatalogPanel />
+      <Inspector />
       <SelectionBar />
       <div className="dock">
         <div className="hints">

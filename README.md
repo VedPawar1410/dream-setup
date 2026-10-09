@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 3 (catalog and placement) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
+**Status:** Phase 4 (customisation) complete. See [PLAN.md](PLAN.md). Model credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -31,6 +31,11 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 | Cmd/Ctrl + D | Duplicate the selected item |
 | Delete / Backspace | Remove the selected item (and what's on it) |
 | Esc | Cancel placing → deselect → back to view mode |
+
+**Customising (decorate mode, right panel)**
+- Select an item to recolour each of its parts (wood, fabric, metal, RGB lighting…), or reset it.
+- With nothing selected, the Room panel styles the **walls** (paint, stripes, floral, brick, panels, tiles) and the **floor** (planks, parquet, tiles, carpet, concrete) in any colour.
+- Paint all walls at once, pick one with N/E/S/W, or just click a wall in the room.
 
 **Blueprint mode**
 | Input | Action |

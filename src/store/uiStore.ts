@@ -17,7 +17,7 @@ export type Ghost = { wall: WallSide; offset: number; valid: boolean }
  * `rot` is its yaw in room space. Where it would land is solved every frame and lives
  * outside React (see scene/placementSolver.ts), so moving the mouse never re-renders.
  */
-export type CarryItem = { catalogId: string; itemId: string | null; rot: number }
+export type CarryItem = { catalogId: string; itemId: string | null; rot: number; colors?: Record<string, string> }
 
 type UiState = {
   mode: Mode
@@ -28,6 +28,9 @@ type UiState = {
   // Decorate mode
   selectedItemId: string | null
   carryItem: CarryItem | null
+  /** Which wall(s) the Room panel paints. */
+  paintTarget: WallSide | 'all'
+  roomTab: 'walls' | 'floor'
 }
 
 export const useUi = create<UiState>(() => ({
@@ -37,4 +40,6 @@ export const useUi = create<UiState>(() => ({
   ghost: null,
   selectedItemId: null,
   carryItem: null,
+  paintTarget: 'all',
+  roomTab: 'walls',
 }))

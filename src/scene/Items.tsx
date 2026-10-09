@@ -23,6 +23,7 @@ import {
   selectItem,
 } from './decorateActions'
 import { THICKNESS } from './dimensions'
+import { applyColors } from './colors'
 import { applyLook, type Look } from './looks'
 import { candidateMatrix, placement, solvePlacement } from './placementSolver'
 import { clippedRaycast, itemAnims, itemObjects } from './sceneRefs'
@@ -78,6 +79,7 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     return o
   }, [proto, clip])
 
+  useEffect(() => applyColors(object, item.colors), [object, item.colors])
   const look: Look = ghost ? 'ghost' : selected ? 'selected' : hovered ? 'hover' : 'normal'
   useEffect(() => applyLook(object, look), [object, look])
 
@@ -154,6 +156,8 @@ export function Placement() {
 function Ghost({ carry }: { carry: CarryItem }) {
   const proto = use(loadPrototype(catalogById.get(carry.catalogId)!))
   const object = useMemo(() => instantiate(proto), [proto])
+  // A moved or duplicated item keeps its colours in hand
+  useEffect(() => applyColors(object, carry.colors), [object, carry.colors])
   const children = useRoom(useShallow((s) => (carry.itemId ? s.doc.items.filter((c) => c.parentId === carry.itemId) : NONE)))
   const root = useRef<Group>(null!)
   const shownValid = useRef<boolean | null>(null)
