@@ -40,10 +40,15 @@ export function isValidOpening(shell: Shell, o: Opening) {
 }
 
 /**
- * The room can't shrink past its openings. Rather than silently deleting a window
- * when you drag a wall in, the wall simply stops, which is easier to predict.
+ * The room can't shrink past its openings (or its furniture: `itemMin`). Rather than
+ * silently deleting a window when you drag a wall in, the wall simply stops, which is
+ * easier to predict.
  */
-export function clampSize(shell: Shell, patch: Partial<Pick<Shell, 'width' | 'depth' | 'height'>>) {
+export function clampSize(
+  shell: Shell,
+  patch: Partial<Pick<Shell, 'width' | 'depth' | 'height'>>,
+  itemMin = { width: 0, depth: 0, height: 0 },
+) {
   const span = (walls: WallSide[]) =>
     Math.max(
       ROOM.min,
@@ -52,9 +57,10 @@ export function clampSize(shell: Shell, patch: Partial<Pick<Shell, 'width' | 'de
   const minHeight = Math.max(ROOM.minHeight, ...shell.openings.map((o) => o.sill + o.height + HEADROOM))
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
+  // Only clamp what's being changed: editing the width must never nudge the depth
   return {
-    width: clamp(patch.width ?? shell.width, span(['north', 'south']), ROOM.max),
-    depth: clamp(patch.depth ?? shell.depth, span(['east', 'west']), ROOM.max),
-    height: clamp(patch.height ?? shell.height, minHeight, ROOM.maxHeight),
+    width: patch.width === undefined ? shell.width : clamp(patch.width, Math.max(span(['north', 'south']), itemMin.width), ROOM.max),
+    depth: patch.depth === undefined ? shell.depth : clamp(patch.depth, Math.max(span(['east', 'west']), itemMin.depth), ROOM.max),
+    height: patch.height === undefined ? shell.height : clamp(patch.height, Math.max(minHeight, itemMin.height), ROOM.maxHeight),
   }
 }

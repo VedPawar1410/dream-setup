@@ -1,13 +1,14 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import { BackSide, MathUtils, Plane, Vector3, type Group } from 'three'
+import { MathUtils, Plane, Vector3, type Group, type Mesh } from 'three'
 import { intro } from '../anim/intro'
-import { useRoom, type Opening, type WallSide } from '../store/roomStore'
+import { useRoom, type Opening, type PlacedItem, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { drop, hoverWall } from './blueprintActions'
 import { FLOOR_T, THICKNESS } from './dimensions'
+import { ItemList, Placement } from './Items'
 import { OpeningView, type WallPointer } from './Openings'
-import { clippedRaycast, noRaycast, wallCut } from './sceneRefs'
+import { clippedRaycast, noRaycast, room, wallCut, wallGroups, wallMeshes } from './sceneRefs'
 import { buildWallGeometry, solidSpans } from './wallGeometry'
 
 const BASE_COLOR = '#2a2235' // diorama plinth, also used for wall cut faces
@@ -43,10 +44,27 @@ const toCamera = new Vector3()
 
 export default function RoomShell() {
   const shell = useRoom((s) => s.doc.shell)
+  const items = useRoom((s) => s.doc.items)
   const carry = useUi((s) => s.carry)
   const ghost = useUi((s) => s.ghost)
+  const carriedItemId = useUi((s) => s.carryItem?.itemId ?? null)
   const { width, depth, height } = shell
   const group = useRef<Group>(null!)
+
+  useEffect(() => {
+    room.group = group.current
+    return () => {
+      room.group = null
+    }
+  }, [])
+
+  // Root items stand in room space; wall items render inside their wall's group. The item
+  // being moved is left out (its ghost stands in for it until it's dropped).
+  const rootItems = useMemo(() => items.filter((it) => !it.parentId && !it.wall && it.id !== carriedItemId), [items, carriedItemId])
+  const wallItems = useMemo(
+    () => SIDES.map((side) => items.filter((it) => it.wall?.side === side && !it.parentId && it.id !== carriedItemId)),
+    [items, carriedItemId],
+  )
 
   const walls = useMemo(() => layoutWalls(width, depth), [width, depth])
 
@@ -121,23 +139,55 @@ export default function RoomShell() {
           color={shell.wallColor}
           openings={perWall[i]}
           ghost={ghostOpening?.opening.wall === w.side ? ghostOpening : null}
+          items={wallItems[i]}
           clip={clips[i]}
         />
       ))}
+
+      <ItemList items={rootItems} />
+      <Placement />
     </group>
   )
 }
 
-type WallProps = { layout: WallLayout; height: number; color: string; openings: Opening[]; ghost: GhostOpening | null; clip: Plane[] }
+type WallProps = {
+  layout: WallLayout
+  height: number
+  color: string
+  openings: Opening[]
+  ghost: GhostOpening | null
+  items: PlacedItem[]
+  clip: Plane[]
+}
 
-function Wall({ layout, height, color, openings, ghost, clip }: WallProps) {
+function Wall({ layout, height, color, openings, ghost, items, clip }: WallProps) {
   const group = useRef<Group>(null!)
+  const body = useRef<Mesh>(null!)
+
+  // The placement solver raycasts wall bodies and positions wall items in the wall's frame
+  useEffect(() => {
+    wallMeshes.set(layout.side, body.current)
+    wallGroups.set(layout.side, group.current)
+    return () => {
+      wallMeshes.delete(layout.side)
+      wallGroups.delete(layout.side)
+    }
+  }, [layout.side])
 
   // A valid ghost cuts a live hole, so you see the result before you commit.
   const holes = useMemo(() => (ghost?.valid ? [...openings, ghost.opening] : openings), [openings, ghost])
   const geometry = useMemo(() => buildWallGeometry(layout.length, height, THICKNESS, holes), [layout.length, height, holes])
   useEffect(() => () => geometry.dispose(), [geometry])
   const spans = useMemo(() => solidSpans(layout.innerLength, holes), [layout.innerLength, holes])
+  const capSpans = useMemo(() => solidSpans(layout.length, holes), [layout.length, holes])
+  const cap = useRef<Group>(null!)
+
+  // The lid follows this wall's clip height, and hides when the wall is whole
+  useFrame(() => {
+    const h = clip[0].constant
+    cap.current.visible = h < height
+    cap.current.position.y = h
+  })
 
   const raycast = useMemo(() => clippedRaycast(clip[0]), [clip])
 
@@ -170,14 +220,20 @@ function Wall({ layout, height, color, openings, ghost, clip }: WallProps) {
     <group ref={group} position={layout.position} rotation-y={layout.rotationY}>
       {/* clipShadows stays off on purpose: a cut-away wall still casts its full shadow,
           so the room's lighting doesn't change as you orbit. */}
-      <mesh geometry={geometry} castShadow receiveShadow raycast={raycast} {...pointer}>
+      <mesh ref={body} geometry={geometry} castShadow receiveShadow raycast={raycast} {...pointer}>
         <meshStandardMaterial color={color} roughness={0.85} clippingPlanes={clip} />
       </mesh>
-      {/* Cross-section trick: once the top is clipped, you'd see into the hollow wall.
-          A back-face-only copy in a dark colour makes the cut look like a solid slab. */}
-      <mesh geometry={geometry}>
-        <meshBasicMaterial color={BASE_COLOR} side={BackSide} clippingPlanes={clip} />
-      </mesh>
+      {/* Cross-section cap: once the top is clipped you'd see into the hollow wall shape,
+          where the floor slab and skirting z-fight. A flat lid that rides at the clip
+          height hides all of that and reads as a solid cut slab. Doorways stay open. */}
+      <group ref={cap}>
+        {capSpans.map(([a, b]) => (
+          <mesh key={a} position={[(a + b) / 2, 0, 0]} rotation-x={-Math.PI / 2} raycast={noRaycast}>
+            <planeGeometry args={[b - a, THICKNESS]} />
+            <meshBasicMaterial color={BASE_COLOR} />
+          </mesh>
+        ))}
+      </group>
 
       {spans.map(([a, b]) => (
         <mesh key={a} position={[(a + b) / 2, SKIRTING_H / 2, THICKNESS / 2 + 0.008]} castShadow receiveShadow>
@@ -190,6 +246,8 @@ function Wall({ layout, height, color, openings, ghost, clip }: WallProps) {
         <OpeningView key={o.id} opening={o} thickness={THICKNESS} clip={clip} />
       ))}
       {ghost && <OpeningView key="ghost" opening={ghost.opening} thickness={THICKNESS} clip={clip} ghost={{ valid: ghost.valid, wall: pointer }} />}
+
+      <ItemList items={items} clip={clip} />
     </group>
   )
 }

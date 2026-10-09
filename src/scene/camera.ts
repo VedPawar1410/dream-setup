@@ -7,6 +7,8 @@ let controls: CameraControlsImpl | null = null
 
 export function registerControls(c: CameraControlsImpl | null) {
   controls = c
+  // Dev-only handle for poking at the camera from the browser console
+  if (import.meta.env.DEV) (window as unknown as { __controls: unknown }).__controls = c
 }
 
 const QUARTER = Math.PI / 2
@@ -39,6 +41,6 @@ export function setCameraLocked(locked: boolean) {
 export function setBlueprintView(on: boolean) {
   if (!controls) return
   controls.rotatePolarTo(on ? 0.62 : HOME.polar, true)
-  controls.dollyTo(homeDistance(controls) * (on ? 1.3 : 1), true)
+  controls.dollyTo(homeDistance(controls) * (on ? 0.96 : 1), true)
   controls.moveTo(0, on ? 0 : 0.6, 0, true)
 }
