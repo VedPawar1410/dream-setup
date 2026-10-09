@@ -16,8 +16,9 @@ const snap = (v: number, step: number) => Math.round(v / step) * step
 
 export function setMode(mode: Mode) {
   const ui = useUi.getState()
-  // Mode switches move the camera, which would fight the intro's swoop
-  if (ui.mode === mode || !intro.done) return
+  // Mode switches move the camera or open panels: not during the intro, while seated,
+  // or while framing a photo
+  if (ui.mode === mode || !intro.done || ui.firstPerson || ui.photo) return
   if (ui.carry) cancelCarry()
   if (ui.carryItem) cancelItemCarry()
   useUi.setState({ mode, selectedId: null, selectedItemId: null })

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { Filter } from '../scene/photo'
 import type { Opening, WallSide } from './roomStore'
 
 // Transient editor state, kept apart from the RoomDoc on purpose: it's never saved,
@@ -32,6 +33,10 @@ type UiState = {
   paintTarget: WallSide | 'all'
   roomTab: 'walls' | 'floor'
   roomsOpen: boolean
+  firstPerson: boolean
+  photo: boolean
+  photoFilter: Filter
+  photoBokeh: number
 }
 
 export const useUi = create<UiState>(() => ({
@@ -44,4 +49,8 @@ export const useUi = create<UiState>(() => ({
   paintTarget: 'all',
   roomTab: 'walls',
   roomsOpen: false,
+  firstPerson: false,
+  photo: false,
+  photoFilter: 'natural',
+  photoBokeh: 2,
 }))

@@ -5,15 +5,25 @@ import { sceneReady } from '../anim/intro'
 import { resetView, rotateQuarter } from '../scene/camera'
 import { useUi, type Mode } from '../store/uiStore'
 import { refreshCurrentThumbnail, useSaves } from '../persistence/saves'
+import { exitFirstPerson, toggleFirstPerson } from '../scene/firstPerson'
+import { exitPhoto, togglePhoto } from '../scene/photo'
 import BlueprintPanel from './BlueprintPanel'
 import CatalogPanel from './CatalogPanel'
 import Inspector from './Inspector'
 import ModeSwitch from './ModeSwitch'
+import PhotoBar from './PhotoBar'
 import RoomsPanel from './RoomsPanel'
 import SelectionBar from './SelectionBar'
 import WeatherDock from './WeatherDock'
 
 gsap.registerPlugin(SplitText)
+
+const SEATED_HINTS = [
+  { keys: ['Drag'], label: 'Look around' },
+  { keys: ['Click lamp'], label: 'Switch' },
+  { keys: ['P'], label: 'Photo' },
+  { keys: ['F', 'Esc'], label: 'Stand up' },
+]
 
 const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
   view: [
@@ -23,6 +33,8 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
     { keys: ['W', 'A', 'S', 'D'], label: 'Move' },
     { keys: ['Q', 'E'], label: 'Turn' },
     { keys: ['Click lamp'], label: 'Switch' },
+    { keys: ['F'], label: 'Sit' },
+    { keys: ['P'], label: 'Photo' },
     { keys: ['C'], label: 'Decorate' },
     { keys: ['B'], label: 'Blueprint' },
   ],
@@ -56,12 +68,21 @@ export default function Hud() {
   const mode = useUi((s) => s.mode)
   const roomName = useSaves((s) => s.name)
   const status = useSaves((s) => (s.available ? s.status : null))
+  const firstPerson = useUi((s) => s.firstPerson)
+  const photo = useUi((s) => s.photo)
+  const hints = firstPerson ? SEATED_HINTS : HINTS[mode]
 
   // M opens "My rooms"
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey) return
       if (e.code === 'KeyM') openRooms()
+      else if (e.code === 'KeyF' && !useUi.getState().photo) toggleFirstPerson()
+      else if (e.code === 'KeyP') togglePhoto()
+      else if (e.key === 'Escape') {
+        if (useUi.getState().photo) exitPhoto()
+        else exitFirstPerson()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -92,12 +113,21 @@ export default function Hud() {
     { scope: root },
   )
 
+  // Photo mode clears the screen: the HUD slides away, leaving only the photo bar
+  useGSAP(
+    () => {
+      gsap.to('.topbar', { autoAlpha: photo ? 0 : 1, y: photo ? -16 : 0, duration: 0.4, ease: 'power2.inOut', overwrite: true })
+      gsap.to('.dock', { autoAlpha: photo ? 0 : 1, y: photo ? 16 : 0, duration: 0.4, ease: 'power2.inOut', overwrite: true })
+    },
+    { dependencies: [photo], scope: root },
+  )
+
   // Swap the hint chips with a quick stagger when the mode changes
   useGSAP(
     () => {
       if (introDone.current) gsap.from('.hint', { opacity: 0, y: 6, duration: 0.35, ease: 'power2.out', stagger: 0.03 })
     },
-    { dependencies: [mode], scope: root },
+    { dependencies: [mode, firstPerson], scope: root },
   )
 
   return (
@@ -122,9 +152,10 @@ export default function Hud() {
       <Inspector />
       <SelectionBar />
       <RoomsPanel />
+      <PhotoBar />
       <div className="dock">
         <div className="hints">
-          {HINTS[mode].map((h) => (
+          {hints.map((h) => (
             <span className="hint" key={mode + h.label}>
               {h.keys.map((k) => (
                 <kbd key={k}>{k}</kbd>
@@ -142,6 +173,12 @@ export default function Hud() {
           </button>
           <button className="icon-btn" onClick={() => rotateQuarter(1)} aria-label="Turn right (E)" title="Turn right (E)">
             <svg viewBox="0 0 24 24"><path d="M15 6h5v5M19.5 10.5A8 8 0 1 0 18 17" /></svg>
+          </button>
+          <button className={`icon-btn${firstPerson ? ' on' : ''}`} onClick={toggleFirstPerson} aria-label="Sit at your desk (F)" title={firstPerson ? 'Stand up (F)' : 'Sit at your desk (F)'}>
+            <svg viewBox="0 0 24 24"><path d="M7 21v-4m10 4v-4M5 13h14v4H5zM7 13V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8" /></svg>
+          </button>
+          <button className="icon-btn" onClick={togglePhoto} aria-label="Photo mode (P)" title="Photo mode (P)">
+            <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" /></svg>
           </button>
         </div>
       </div>
