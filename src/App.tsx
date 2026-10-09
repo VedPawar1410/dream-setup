@@ -1,29 +1,26 @@
 import { Canvas } from '@react-three/fiber'
-import { useRef } from 'react'
-import { gsap, useGSAP } from './anim/gsap'
 import Experience from './scene/Experience'
+import Hud from './ui/Hud'
 
 export default function App() {
-  const hud = useRef<HTMLDivElement>(null)
-
-  // useGSAP scopes selectors to `hud` and reverts every tween on unmount,
-  // so StrictMode's double-mount in dev doesn't stack animations.
-  useGSAP(
-    () => {
-      gsap.from('.hud > *', { y: 16, opacity: 0, duration: 0.9, stagger: 0.12, ease: 'power3.out', delay: 0.3 })
-    },
-    { scope: hud },
-  )
-
   return (
     <>
-      <Canvas shadows dpr={[1, 2]} camera={{ position: [6, 5, 6], fov: 40 }}>
+      <Canvas
+        // PCF; three.js removed PCFSoftShadowMap (which plain `shadows` asks for)
+        shadows="percentage"
+        dpr={[1, 2]}
+        // Narrow FOV flattens perspective toward the original's isometric "dollhouse" look
+        camera={{ fov: 30, near: 0.1, far: 100 }}
+        // Antialiasing happens in post (SMAA), so the default framebuffer doesn't need MSAA
+        gl={{ antialias: false, powerPreference: 'high-performance' }}
+        onCreated={({ gl }) => {
+          // Per-material clipping planes (the wall cutaway) are off by default in three.js
+          gl.localClippingEnabled = true
+        }}
+      >
         <Experience />
       </Canvas>
-      <div className="hud" ref={hud}>
-        <h1 className="title">Dream Setup</h1>
-        <p className="subtitle">Phase 0: scaffold check</p>
-      </div>
+      <Hud />
     </>
   )
 }

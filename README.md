@@ -4,7 +4,18 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** Phase 0 (scaffold) complete. See [PLAN.md](PLAN.md).
+**Status:** Phase 1 (room and camera) complete. See [PLAN.md](PLAN.md).
+**Play:** https://vedpawar1410.github.io/dream-setup/
+
+## Controls
+| Input | Action |
+|---|---|
+| Drag | Orbit |
+| Right-drag / middle-drag | Pan |
+| Scroll | Zoom |
+| W A S D / arrow keys | Move around the room |
+| Q / E | Turn 90° to the next corner view |
+| R | Reset view |
 
 ## Run locally
 ```bash
