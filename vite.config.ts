@@ -17,6 +17,8 @@ export default defineConfig(({ command, isPreview }) => ({
       output: {
         codeSplitting: {
           groups: [
+            // Accounts code is imported lazily; its own chunk keeps it out of guests' downloads
+            { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/, priority: 3 },
             { name: 'three', test: /node_modules[\\/]three[\\/]/, priority: 2 },
             { name: 'vendor', test: /node_modules[\\/]/, priority: 1 },
           ],

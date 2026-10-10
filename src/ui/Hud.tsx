@@ -10,6 +10,8 @@ import { useUi, type Mode } from '../store/uiStore'
 import { refreshCurrentThumbnail, useSaves } from '../persistence/saves'
 import { exitFirstPerson, toggleFirstPerson } from '../scene/firstPerson'
 import { exitPhoto, togglePhoto } from '../scene/photo'
+import { AccountMenu, ImportOffer } from './AccountMenu'
+import AuthPanel from './AuthPanel'
 import BlueprintPanel from './BlueprintPanel'
 import CatalogPanel from './CatalogPanel'
 import Inspector from './Inspector'
@@ -160,6 +162,7 @@ export default function Hud() {
               <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
             </button>
             {status && <span className={`save-status ${status}`}>{STATUS[status]}</span>}
+            <AccountMenu />
           </div>
         </div>
         <ModeSwitch />
@@ -171,6 +174,8 @@ export default function Hud() {
       <Inspector />
       <SelectionBar />
       <RoomsPanel />
+      <AuthPanel />
+      <ImportOffer />
       <PhotoBar />
       <Tour />
       <div className="dock">
