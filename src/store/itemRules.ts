@@ -1,4 +1,6 @@
-import type { Opening, PlacedItem } from './roomStore'
+import { blockedAreas } from './layout'
+import type { Opening, PlacedItem, Shell } from './roomStore'
+import { innerLength, isValidOpening } from './rules'
 
 // Pure geometry for furniture: footprints, overlap tests and the room size items need.
 // No three.js or React here, so it's easy to reason about and to test.
@@ -54,27 +56,32 @@ export function rectsOverlap(a: Rect, b: Rect) {
   return true
 }
 
-/** The smallest room that still holds every placed item; resizing stops here. */
-export function itemMinRoom(items: PlacedItem[], sizeOf: SizeOf) {
-  let width = 0
-  let depth = 0
-  let height = 0
-  for (const it of items) {
-    const s = it.parentId ? undefined : sizeOf(it)
-    if (!s) continue
+const TOL = 1e-3
+
+/** Is this footprint on the floor: inside the room and clear of any cut-out or divider? */
+export function onFloor(shell: Shell, r: Rect) {
+  const { hx, hz } = halfExtents({ x: r.hw * 2, y: 0, z: r.hd * 2 }, r.rot)
+  if (Math.abs(r.x) + hx > shell.width / 2 + TOL || Math.abs(r.z) + hz > shell.depth / 2 + TOL) return false
+  return blockedAreas(shell).every((b) => !rectsOverlap(r, { x: (b.x0 + b.x1) / 2, z: (b.z0 + b.z1) / 2, hw: (b.x1 - b.x0) / 2, hd: (b.z1 - b.z0) / 2, rot: 0 }))
+}
+
+/**
+ * Would everything still fit in this room? Every opening on an existing wall, every wall
+ * item within its wall, every floor item on the floor, nothing taller than the room.
+ * Resizing and reshaping use this to stop (or refuse) instead of breaking the room.
+ */
+export function shellFits(shell: Shell, items: PlacedItem[], sizeOf: SizeOf) {
+  if (!shell.openings.every((o) => isValidOpening(shell, o))) return false
+  return items.every((it) => {
+    if (it.parentId) return true // moves with its parent
+    const s = sizeOf(it)
+    if (!s) return true // not loaded yet: can't judge
     if (it.wall) {
-      const need = 2 * (Math.abs(it.wall.along) + s.x / 2)
-      if (it.wall.side === 'north' || it.wall.side === 'south') width = Math.max(width, need)
-      else depth = Math.max(depth, need)
-      height = Math.max(height, it.wall.y + s.y)
-    } else {
-      const { hx, hz } = halfExtents(s, it.rot)
-      width = Math.max(width, 2 * (Math.abs(it.x) + hx))
-      depth = Math.max(depth, 2 * (Math.abs(it.z) + hz))
-      height = Math.max(height, s.y)
+      const len = innerLength(shell, it.wall.side)
+      return len > 0 && Math.abs(it.wall.along) + s.x / 2 <= len / 2 + TOL && it.wall.y + s.y <= shell.height + TOL
     }
-  }
-  return { width, depth, height }
+    return s.y <= shell.height + TOL && onFloor(shell, { x: it.x, z: it.z, hw: s.x / 2, hd: s.z / 2, rot: it.rot })
+  })
 }
 
 /** Would this window/door cut through something hanging on its wall? */

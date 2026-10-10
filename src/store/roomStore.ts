@@ -4,15 +4,17 @@ import { sizeOfItem } from '../catalog/models'
 import type { Weather } from '../scene/atmosphere'
 import type { ScreenMode } from '../scene/screens'
 import type { FloorMaterial, WallPattern } from '../scene/surfaces'
-import { itemMinRoom, openingHitsWallItems, type Scale } from './itemRules'
+import { openingHitsWallItems, shellFits, type Scale } from './itemRules'
+import { fitShape, RECT, wallsOf, type RoomShape } from './layout'
 import { record } from './history'
-import { clampSize, isValidOpening } from './rules'
+import { isValidOpening, ROOM } from './rules'
 
 // The whole room is one plain, serialisable document. The 3D scene and the HUD only
 // *read* it; the actions below are the only way to change it. That keeps save/load a
 // JSON.stringify away, and makes undo a stack of snapshots.
 
-export type WallSide = 'north' | 'east' | 'south' | 'west'
+/** A wall's id: north/east/south/west, plus inner-h/inner-v (L-shape) or divider. See layout.ts. */
+export type WallSide = string
 
 export type Opening = {
   id: string
@@ -62,6 +64,9 @@ export type RoomDoc = {
     width: number // x, metres
     depth: number // z, metres
     height: number
+    /** Rectangle (default), L-shape or two rooms. */
+    shape?: RoomShape
+    /** Finish per wall id. A wall without an entry uses the north wall's finish. */
     walls: Record<WallSide, WallFinish>
     floor: FloorFinish
     openings: Opening[]
@@ -116,11 +121,28 @@ export const defaultRoom: RoomDoc = {
 
 const sizeOf = sizeOfItem
 
-type SizePatch = Partial<Pick<Shell, 'width' | 'depth' | 'height'>>
+type SizePatch = Partial<Pick<Shell, 'width' | 'depth' | 'height' | 'shape'>>
+
+/** Interpolate between two shells of the same shape kind (null if the kinds differ). */
+function blendShells(a: Shell, b: Shell): ((k: number) => Shell) | null {
+  const sa = a.shape ?? RECT
+  const sb = b.shape ?? RECT
+  const l = (x: number, y: number, k: number) => x + (y - x) * k
+  let shape: (k: number) => RoomShape
+  if (sa.kind === 'rect' && sb.kind === 'rect') shape = () => RECT
+  else if (sa.kind === 'l' && sb.kind === 'l' && sa.corner === sb.corner) shape = (k) => ({ ...sb, cutW: l(sa.cutW, sb.cutW, k), cutD: l(sa.cutD, sb.cutD, k) })
+  else if (sa.kind === 'split' && sb.kind === 'split') shape = (k) => ({ kind: 'split', at: l(sa.at, sb.at, k) })
+  else return null
+  return (k) => ({ ...b, width: l(a.width, b.width, k), depth: l(a.depth, b.depth, k), height: l(a.height, b.height, k), shape: shape(k) })
+}
 
 type RoomState = {
   doc: RoomDoc
-  resize: (patch: SizePatch) => void
+  /**
+   * Change the room's size or shape. If the result wouldn't fit everything in it, a drag
+   * stops at the last size that does; a shape switch is refused. Returns whether it applied fully.
+   */
+  resize: (patch: SizePatch) => boolean
   /** Returns false (and changes nothing) if the opening doesn't fit. */
   addOpening: (o: Opening) => boolean
   updateOpening: (id: string, patch: Partial<Omit<Opening, 'id' | 'kind'>>) => boolean
@@ -138,7 +160,6 @@ type RoomState = {
   togglePower: (id: string) => void
 }
 
-const SIDES: WallSide[] = ['north', 'east', 'south', 'west']
 
 export const useRoom = create<RoomState>((set, get) => {
   // Always replace, never mutate: Zustand selectors compare by reference, so a new
@@ -159,7 +180,29 @@ export const useRoom = create<RoomState>((set, get) => {
 
     resize: (patch) => {
       const { shell, items } = get().doc
-      setShell({ ...shell, ...clampSize(shell, patch, itemMinRoom(items, sizeOf)) }, 'resize')
+      const c = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
+      const width = c(patch.width ?? shell.width, ROOM.min, ROOM.max)
+      const depth = c(patch.depth ?? shell.depth, ROOM.min, ROOM.max)
+      const height = c(patch.height ?? shell.height, ROOM.minHeight, ROOM.maxHeight)
+      const target: Shell = { ...shell, width, depth, height, shape: fitShape(patch.shape ?? shell.shape ?? RECT, width, depth) }
+      const fits = (s: Shell) => shellFits(s, items, sizeOf)
+      if (fits(target)) {
+        setShell(target, 'resize')
+        return true
+      }
+      // A drag: find the last size on the way that still fits (binary search on the
+      // blend), so the wall or handle stops at the furniture instead of jumping back
+      const blend = blendShells(shell, target)
+      if (!blend) return false // a different shape kind: nothing in between
+      let lo = 0
+      let hi = 1
+      for (let i = 0; i < 14; i++) {
+        const mid = (lo + hi) / 2
+        if (fits(blend(mid))) lo = mid
+        else hi = mid
+      }
+      if (lo > 1e-3) setShell(blend(lo), 'resize')
+      return false
     },
 
     addOpening: (o) => {
@@ -213,7 +256,8 @@ export const useRoom = create<RoomState>((set, get) => {
     setWallFinish: (target, patch) => {
       const shell = get().doc.shell
       const walls = { ...shell.walls }
-      for (const side of target === 'all' ? SIDES : [target]) walls[side] = { ...walls[side], ...patch }
+      const base = walls.north
+      for (const side of target === 'all' ? wallsOf(shell).map((w) => w.id) : [target]) walls[side] = { ...(walls[side] ?? base), ...patch }
       setShell({ ...shell, walls }, `walls:${target}:${Object.keys(patch).join()}`)
     },
 

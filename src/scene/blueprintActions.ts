@@ -2,8 +2,9 @@ import { gsap } from '../anim/gsap'
 import { intro } from '../anim/intro'
 import { boop, play, plop } from '../audio/sound'
 import { sizeOfItem } from '../catalog/models'
-import { redo, undo } from '../store/history'
-import { openingHitsWallItems } from '../store/itemRules'
+import { batch, redo, undo } from '../store/history'
+import { fitShape, RECT, wallsOf, type RoomShape } from '../store/layout'
+import { openingHitsWallItems, shellFits } from '../store/itemRules'
 import { useRoom, type Opening, type WallSide } from '../store/roomStore'
 import { isValidOpening, offsetLimit, OPENING_DEFAULTS } from '../store/rules'
 import { useUi, type Mode } from '../store/uiStore'
@@ -44,6 +45,49 @@ export function undoRedo(dir: -1 | 1) {
   const { selectedItemId, selectedId } = useUi.getState()
   if (selectedItemId && !items.some((it) => it.id === selectedItemId)) useUi.setState({ selectedItemId: null })
   if (selectedId && !shell.openings.some((o) => o.id === selectedId)) useUi.setState({ selectedId: null })
+}
+
+/**
+ * Switch the room between Rectangle, L-shape and Two rooms, as one undo step. Doors and
+ * windows on walls that won't exist go with them; switching to two rooms adds a doorway
+ * in the divider. Returns why it can't, if furniture is in the way.
+ */
+export function setRoomShape(kind: RoomShape['kind']): string | null {
+  const room = useRoom.getState()
+  const { shell, items } = room.doc
+  if ((shell.shape ?? RECT).kind === kind) return null
+  // An L tries each corner in turn and cuts the first one that's free of furniture
+  const candidates: RoomShape[] =
+    kind === 'l'
+      ? (['ne', 'nw', 'se', 'sw'] as const).map((corner) => fitShape({ kind: 'l', corner, cutW: Math.min(1.6, shell.width / 2), cutD: Math.min(1.4, shell.depth / 2) }, shell.width, shell.depth))
+      : [kind === 'split' ? { kind: 'split', at: 0 } : RECT]
+  const withoutGoneWalls = (shape: RoomShape) => {
+    const keep = new Set(wallsOf({ ...shell, shape }).map((w) => w.id))
+    return { keep, openings: shell.openings.filter((o) => keep.has(o.wall)) }
+  }
+  // Check before touching anything, so a refusal leaves the room exactly as it was
+  const shape = candidates.find((c) => shellFits({ ...shell, shape: c, openings: withoutGoneWalls(c).openings }, items, sizeOfItem))
+  if (!shape) {
+    play('error')
+    return kind === 'rect'
+      ? 'Something is hanging on a wall that would disappear. Move it first.'
+      : kind === 'l'
+        ? 'Every corner has furniture in it. Clear one corner, then try again.'
+        : 'Some furniture is where the divider would go. Move it, then try again.'
+  }
+  const { keep } = withoutGoneWalls(shape)
+  batch('shape', () => {
+    for (const o of shell.openings) if (!keep.has(o.wall)) useRoom.getState().removeOpening(o.id)
+    useRoom.getState().resize({ shape })
+    if (kind === 'split') useRoom.getState().addOpening({ id: crypto.randomUUID(), kind: 'door', wall: 'divider', offset: 0, ...OPENING_DEFAULTS.door })
+  })
+  plop()
+  return null
+}
+
+/** Reshape an existing L or divider (corner, cut-out size, divider position). */
+export function updateRoomShape(shape: RoomShape) {
+  if (!useRoom.getState().resize({ shape })) play('error')
 }
 
 export const toggleBlueprint = () => setMode(useUi.getState().mode === 'blueprint' ? 'view' : 'blueprint')

@@ -5,13 +5,14 @@ import { SCREEN_MODES } from '../scene/screens'
 import { FLOOR_MATERIALS, WALL_PATTERNS } from '../scene/surfaces'
 import { defaultRoom, type FloorFinish, type Opening, type PlacedItem, type RoomDoc, type WallFinish, type WallSide } from '../store/roomStore'
 import { SCALE_MAX, SCALE_MIN } from '../store/itemRules'
+import { fitShape, RECT, wallsOf, type Corner, type RoomShape } from '../store/layout'
 import { ROOM } from '../store/rules'
 
 // Everything that loads a room goes through here: saves from IndexedDB, imported files,
 // and (later) rooms saved by older versions. It fills in anything missing, clamps sizes,
 // and drops anything malformed, so a bad file shows an error instead of breaking the scene.
 
-const SIDES: WallSide[] = ['north', 'east', 'south', 'west']
+const CORNERS = new Set(['ne', 'nw', 'se', 'sw'])
 const WEATHERS: Weather[] = ['sunny', 'sunset', 'rain', 'snow', 'night']
 const PATTERNS = new Set<string>(WALL_PATTERNS.map((p) => p.id))
 const FLOORS = new Set<string>(FLOOR_MATERIALS.map((m) => m.id))
@@ -34,7 +35,16 @@ export class NotARoomError extends Error {
 function wallFinish(v: unknown, legacyColor: unknown, side: WallSide): WallFinish {
   if (isObj(v) && isStr(v.pattern) && PATTERNS.has(v.pattern) && isHex(v.color)) return { pattern: v.pattern as WallFinish['pattern'], color: v.color }
   if (isHex(legacyColor)) return { pattern: 'paint', color: legacyColor } // before per-wall finishes
-  return defaultRoom.shell.walls[side]
+  return defaultRoom.shell.walls[side] ?? defaultRoom.shell.walls.north
+}
+
+/** Rectangle unless a valid L or two-room shape is given, fitted to the room's size. */
+function roomShape(v: unknown, width: number, depth: number): RoomShape {
+  if (isObj(v) && v.kind === 'l' && CORNERS.has(v.corner as string) && isNum(v.cutW) && isNum(v.cutD)) {
+    return fitShape({ kind: 'l', corner: v.corner as Corner, cutW: v.cutW, cutD: v.cutD }, width, depth)
+  }
+  if (isObj(v) && v.kind === 'split' && isNum(v.at)) return fitShape({ kind: 'split', at: v.at }, width, depth)
+  return RECT
 }
 
 function floorFinish(v: unknown, legacyColor: unknown): FloorFinish {
@@ -43,8 +53,8 @@ function floorFinish(v: unknown, legacyColor: unknown): FloorFinish {
   return defaultRoom.shell.floor
 }
 
-function opening(v: unknown): Opening | null {
-  if (!isObj(v) || !isStr(v.id) || (v.kind !== 'window' && v.kind !== 'door') || !SIDES.includes(v.wall as WallSide)) return null
+function opening(v: unknown, wallIds: Set<string>): Opening | null {
+  if (!isObj(v) || !isStr(v.id) || (v.kind !== 'window' && v.kind !== 'door') || !wallIds.has(v.wall as string)) return null
   if (![v.offset, v.width, v.height, v.sill].every(isNum)) return null
   return { id: v.id, kind: v.kind, wall: v.wall as WallSide, offset: v.offset as number, width: v.width as number, height: v.height as number, sill: v.sill as number }
 }
@@ -68,13 +78,13 @@ function customDefs(v: unknown): Record<string, CustomDef> {
   return out
 }
 
-function item(v: unknown, custom: Record<string, CustomDef>): PlacedItem | null {
+function item(v: unknown, custom: Record<string, CustomDef>, wallIds: Set<string>): PlacedItem | null {
   if (!isObj(v) || !isStr(v.id) || !isStr(v.catalogId) || !(CATALOG_IDS.has(v.catalogId) || custom[v.catalogId])) return null
   if (![v.x, v.z, v.rot].every(isNum)) return null
   const out: PlacedItem = { id: v.id, catalogId: v.catalogId, x: v.x as number, z: v.z as number, rot: v.rot as number, parentId: isStr(v.parentId) ? v.parentId : null }
   if (isObj(v.wall)) {
     const w = v.wall
-    if (!SIDES.includes(w.side as WallSide) || !isNum(w.along) || !isNum(w.y)) return null
+    if (!wallIds.has(w.side as string) || !isNum(w.along) || !isNum(w.y)) return null
     out.wall = { side: w.side as WallSide, along: w.along, y: w.y }
   }
   if (isObj(v.colors)) {
@@ -110,16 +120,22 @@ export function migrate(raw: unknown): RoomDoc {
 
   const atmosphere = isObj(raw.atmosphere) ? raw.atmosphere : {}
   const custom = customDefs(raw.custom)
-  const items = withoutOrphans(raw.items.map((v) => item(v, custom)).filter((it): it is PlacedItem => !!it))
+  const width = clamp(isNum(s.width) ? s.width : d.width, ROOM.min, ROOM.max)
+  const depth = clamp(isNum(s.depth) ? s.depth : d.depth, ROOM.min, ROOM.max)
+  // The shape decides which walls exist; openings and wall items must be on one of them
+  const shape = roomShape(s.shape, width, depth)
+  const wallIds = new Set(wallsOf({ width, depth, shape }).map((w) => w.id))
+  const items = withoutOrphans(raw.items.map((v) => item(v, custom, wallIds)).filter((it): it is PlacedItem => !!it))
   return {
     version: 1,
     shell: {
-      width: clamp(isNum(s.width) ? s.width : d.width, ROOM.min, ROOM.max),
-      depth: clamp(isNum(s.depth) ? s.depth : d.depth, ROOM.min, ROOM.max),
+      width,
+      depth,
       height: clamp(isNum(s.height) ? s.height : d.height, ROOM.minHeight, ROOM.maxHeight),
-      walls: Object.fromEntries(SIDES.map((side) => [side, wallFinish(walls[side], s.wallColor, side)])) as Record<WallSide, WallFinish>,
+      ...(shape.kind !== 'rect' && { shape }),
+      walls: Object.fromEntries([...wallIds].map((side) => [side, wallFinish(walls[side], s.wallColor, side)])) as Record<WallSide, WallFinish>,
       floor: floorFinish(s.floor, s.floorColor),
-      openings: Array.isArray(s.openings) ? s.openings.map(opening).filter((o): o is Opening => !!o) : [],
+      openings: Array.isArray(s.openings) ? s.openings.map((o) => opening(o, wallIds)).filter((o): o is Opening => !!o) : [],
     },
     items,
     atmosphere: {
