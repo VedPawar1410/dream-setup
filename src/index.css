@@ -2146,3 +2146,118 @@ kbd {
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* ---------- v2.3: sharing ---------- */
+
+.badge.shared {
+  left: auto;
+  right: 8px;
+  background: rgb(127 217 168 / 0.9);
+  color: #10301f;
+}
+
+.rooms.share {
+  width: min(520px, 100%);
+}
+
+.share-link {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: rgb(0 0 0 / 0.25);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.share-qr {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.04);
+}
+
+.share-qr canvas {
+  width: 168px;
+  height: 168px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+}
+
+.share-qr p {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  color: var(--ink-dim);
+}
+
+.share-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.share-actions .spacer {
+  flex: 1;
+}
+
+.danger-pill {
+  color: #ff9db5;
+}
+
+.share-off {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.share-off p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+
+.viewing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--ink-dim);
+  pointer-events: auto;
+}
+
+.viewing b {
+  color: var(--ink);
+}
+
+.viewing-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(177 140 255 / 0.18);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.viewing .pill-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .share-qr {
+    flex-direction: column;
+    text-align: center;
+  }
+}

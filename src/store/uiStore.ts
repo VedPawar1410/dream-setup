@@ -44,7 +44,13 @@ type UiState = {
   authOpen: AuthView | null
   /** Guest rooms in this browser that a just-signed-in account could take in (0 = no offer). */
   importOffer: number
+  /** Opened from someone's share link: view-only, nothing is saved. */
+  viewing: Viewing | null
+  /** The room whose share sheet is open. */
+  shareOpen: string | null
 }
+
+export type Viewing = { owner: string; name: string } | { missing: true }
 
 export type AuthView = 'signin' | 'signup' | 'forgot' | 'reset'
 
@@ -65,4 +71,6 @@ export const useUi = create<UiState>(() => ({
   tourOpen: false,
   authOpen: null,
   importOffer: 0,
+  viewing: null,
+  shareOpen: null,
 }))

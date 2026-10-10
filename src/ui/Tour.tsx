@@ -24,7 +24,7 @@ export default function Tour() {
     let timer = 0
     sceneReady.then(() => {
       timer = window.setTimeout(() => {
-        if (!useSettings.getState().tourDone) useUi.setState({ tourOpen: true })
+        if (!useSettings.getState().tourDone && !useUi.getState().viewing) useUi.setState({ tourOpen: true })
       }, 3400)
     })
     return () => clearTimeout(timer)

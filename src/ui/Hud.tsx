@@ -19,6 +19,7 @@ import ModeSwitch from './ModeSwitch'
 import PhotoBar from './PhotoBar'
 import RoomsPanel from './RoomsPanel'
 import SelectionBar from './SelectionBar'
+import SharePanel, { ViewingBar } from './SharePanel'
 import SettingsMenu from './SettingsMenu'
 import Tour from './Tour'
 import WeatherDock from './WeatherDock'
@@ -66,6 +67,7 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
 }
 
 const openRooms = () => {
+  if (useUi.getState().viewing) return
   if (useUi.getState().roomsOpen) return
   void refreshCurrentThumbnail() // so the current room's card shows how it looks right now
   play('open')
@@ -81,7 +83,9 @@ export default function Hud() {
   const status = useSaves((s) => (s.available ? s.status : null))
   const firstPerson = useUi((s) => s.firstPerson)
   const photo = useUi((s) => s.photo)
-  const hints = firstPerson ? SEATED_HINTS : HINTS[mode]
+  const viewing = useUi((s) => s.viewing)
+  // In someone else's room you can look around, but not edit
+  const hints = firstPerson ? SEATED_HINTS : viewing ? HINTS.view.filter((h) => h.label !== 'Decorate' && h.label !== 'Blueprint') : HINTS[mode]
   const canUndo = useHistory((s) => s.canUndo)
   const canRedo = useHistory((s) => s.canRedo)
   const editing = mode !== 'view' && !firstPerson
@@ -156,16 +160,20 @@ export default function Hud() {
       <header className="topbar">
         <div>
           <h1 className="title">Dream Setup</h1>
-          <div className="subtitle">
-            <button className="room-switch" data-sound="none" onClick={openRooms} title="My rooms (M)">
-              {roomName}
-              <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
-            </button>
-            {status && <span className={`save-status ${status}`}>{STATUS[status]}</span>}
-            <AccountMenu />
-          </div>
+          {viewing ? (
+            <ViewingBar viewing={viewing} />
+          ) : (
+            <div className="subtitle">
+              <button className="room-switch" data-sound="none" onClick={openRooms} title="My rooms (M)">
+                {roomName}
+                <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+              {status && <span className={`save-status ${status}`}>{STATUS[status]}</span>}
+              <AccountMenu />
+            </div>
+          )}
         </div>
-        <ModeSwitch />
+        {viewing ? <span /> : <ModeSwitch />}
         <WeatherDock />
       </header>
 
@@ -174,6 +182,7 @@ export default function Hud() {
       <Inspector />
       <SelectionBar />
       <RoomsPanel />
+      <SharePanel />
       <AuthPanel />
       <ImportOffer />
       <PhotoBar />

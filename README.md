@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 complete; v2.1 (editing upgrades) and v2.2 (accounts, cloud saves, installable app) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) and v2.3 (share links + QR) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -48,6 +48,7 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
 **Saving (automatic)**
 - **Sign in** (next to the room name) to keep your rooms in your account, on every device. Guests still save in this browser, and signing in offers to copy those rooms over.
+- **Share** a room (signed in): My rooms → Share → Create share link. Anyone with the link or QR code can look around, sit at the desk and take photos, but can't change anything. "Save a copy" puts it in their own rooms. Stop sharing (or New link) kills old links.
 - Install it as an app: Chrome/Edge show an install icon in the address bar; on a phone use "Add to Home Screen".
 - Your room saves itself in this browser a moment after every change (IndexedDB; nothing leaves your machine).
 - Click the room name under the title, or press **M**, for **My rooms**: open, rename (double-click), duplicate or delete rooms, start a new or empty room, and export/import a room as a `.dreamroom.json` file.

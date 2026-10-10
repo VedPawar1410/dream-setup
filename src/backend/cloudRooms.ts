@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { metaOf, type RoomBackend, type SaveRecord } from '../persistence/saves'
 
-type Row = { id: string; name: string; doc: SaveRecord['doc']; thumbnail: string | null; created_at: string; updated_at: string }
+type Row = { id: string; name: string; doc: SaveRecord['doc']; thumbnail: string | null; created_at: string; updated_at: string; share_token: string | null }
 
 const fromRow = (r: Row): SaveRecord => ({
   id: r.id,
@@ -10,6 +10,7 @@ const fromRow = (r: Row): SaveRecord => ({
   thumbnail: r.thumbnail,
   createdAt: Date.parse(r.created_at),
   updatedAt: Date.parse(r.updated_at),
+  shareToken: r.share_token,
 })
 
 /**
@@ -24,13 +25,14 @@ export function cloudRooms(sb: SupabaseClient): RoomBackend {
   return {
     kind: 'cloud',
     async list() {
-      const rows = check(await sb.from('rooms').select('id, name, thumbnail, created_at, updated_at').order('updated_at', { ascending: false }))
+      const rows = check(await sb.from('rooms').select('id, name, thumbnail, created_at, updated_at, share_token').order('updated_at', { ascending: false }))
       return (rows as Omit<Row, 'doc'>[]).map((r) => metaOf(fromRow({ ...r, doc: null as never })))
     },
     async get(id) {
       const row = check(await sb.from('rooms').select('*').eq('id', id).maybeSingle())
       return row ? fromRow(row as Row) : undefined
     },
+    // The share token is never written here, so saving can't accidentally revoke a link
     async put(rec) {
       check(
         await sb.from('rooms').upsert({
