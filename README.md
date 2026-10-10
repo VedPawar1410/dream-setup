@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) v2.3 (share links + QR) v2.4 (living desk) v2.5 (themed packs) v2.6 (your own scanned items) and v2.7 (L-shaped and two-room layouts) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 and v2 complete: editing upgrades, accounts and cloud saves, share links, the living desk, themed packs, your own scanned items, and L-shaped / two-room layouts. See [PLAN.md](PLAN.md) for the roadmap; model, sound and music credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
