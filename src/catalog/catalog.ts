@@ -1,6 +1,24 @@
 export type Mount = 'floor' | 'surface' | 'wall' | 'ceiling'
-export type Category = 'desk' | 'seating' | 'tables' | 'beds' | 'storage' | 'lighting' | 'decor' | 'plants'
-export type ProceduralId = 'pcTower' | 'monitorWide' | 'deskMat' | 'wallShelf' | 'posterSunset' | 'posterOcean' | 'posterShapes' | 'ledStrip'
+export type Category = 'desk' | 'seating' | 'tables' | 'beds' | 'storage' | 'lighting' | 'decor' | 'plants' | 'kitchen' | 'garage' | 'pets' | 'racing'
+export type ProceduralId =
+  | 'pcTower'
+  | 'monitorWide'
+  | 'deskMat'
+  | 'wallShelf'
+  | 'posterSunset'
+  | 'posterOcean'
+  | 'posterShapes'
+  | 'ledStrip'
+  // Themed packs (packs.ts)
+  | 'workbench'
+  | 'pegboard'
+  | 'toolbox'
+  | 'simRig'
+  | 'tripleMonitor'
+  | 'catTree'
+  | 'dogBed'
+  | 'petBowls'
+  | 'aquarium'
 
 export type CatalogItem = {
   id: string
@@ -37,16 +55,21 @@ export const CATEGORIES: { id: Category; label: string }[] = [
   { id: 'lighting', label: 'Lighting' },
   { id: 'decor', label: 'Decor' },
   { id: 'plants', label: 'Plants' },
+  // Themed packs
+  { id: 'kitchen', label: 'Kitchen' },
+  { id: 'garage', label: 'Garage' },
+  { id: 'pets', label: 'Pets' },
+  { id: 'racing', label: 'Sim Racing' },
 ]
 
 // Kenney's furniture is modelled at roughly half scale: ×1.9 puts a desk top at a real 73 cm.
 const K = 1.9
 
-type Opts = Pick<CatalogItem, 'surface' | 'flat' | 'light' | 'glows' | 'screen' | 'spin' | 'music'> & { scale?: number; yaw?: number }
+type Opts = Pick<CatalogItem, 'surface' | 'flat' | 'light' | 'glows' | 'screen' | 'spin' | 'music'> & { scale?: number; yaw?: number; file?: string }
 
 function kenney(id: string, name: string, category: Category, mount: Mount, o: Opts = {}): CatalogItem {
-  const { scale, yaw, ...rest } = o
-  return { id, name, category, mount, ...rest, model: { kind: 'glb', file: `kenney/${id}.glb`, scale: scale ?? K, yaw: yaw ?? 0 } }
+  const { scale, yaw, file, ...rest } = o
+  return { id, name, category, mount, ...rest, model: { kind: 'glb', file: file ?? `kenney/${id}.glb`, scale: scale ?? K, yaw: yaw ?? 0 } }
 }
 
 function made(id: ProceduralId, name: string, category: Category, mount: Mount, o: Opts = {}): CatalogItem {
@@ -150,6 +173,51 @@ export const CATALOG: CatalogItem[] = [
   kenney('plantSmall1', 'Small Plant', 'plants', 'surface'),
   kenney('plantSmall2', 'Succulent', 'plants', 'surface'),
   kenney('plantSmall3', 'Cactus', 'plants', 'surface'),
+
+  // ----- Themed packs -----
+
+  // Kitchen (Kenney Furniture Kit)
+  kenney('kitchenFridge', 'Fridge', 'kitchen', 'floor'),
+  kenney('kitchenFridgeLarge', 'Double Fridge', 'kitchen', 'floor'),
+  kenney('kitchenStove', 'Stove', 'kitchen', 'floor', { surface: true }),
+  kenney('kitchenSink', 'Sink Unit', 'kitchen', 'floor', { surface: true }),
+  kenney('kitchenCabinet', 'Base Cabinet', 'kitchen', 'floor', { surface: true }),
+  kenney('kitchenCabinetDrawer', 'Drawer Cabinet', 'kitchen', 'floor', { surface: true }),
+  kenney('kitchenBar', 'Kitchen Island', 'kitchen', 'floor', { surface: true }),
+  kenney('kitchenCabinetUpper', 'Wall Cabinet', 'kitchen', 'wall'),
+  kenney('kitchenCabinetUpperDouble', 'Double Wall Cabinet', 'kitchen', 'wall'),
+  kenney('hoodModern', 'Cooker Hood', 'kitchen', 'wall'),
+  kenney('kitchenMicrowave', 'Microwave', 'kitchen', 'surface'),
+  kenney('kitchenCoffeeMachine', 'Coffee Machine', 'kitchen', 'surface'),
+  kenney('kitchenBlender', 'Blender', 'kitchen', 'surface'),
+  kenney('toaster', 'Toaster', 'kitchen', 'surface'),
+  kenney('washer', 'Washing Machine', 'kitchen', 'floor', { surface: true }),
+  kenney('dryer', 'Dryer', 'kitchen', 'floor', { surface: true }),
+  kenney('stoolBarSquare', 'Square Bar Stool', 'kitchen', 'floor'),
+
+  // Garage (workbench, tools: code-built; vehicles and tyre: Kenney Car Kit)
+  made('workbench', 'Workbench', 'garage', 'floor', { surface: true }),
+  made('pegboard', 'Tool Wall', 'garage', 'wall'),
+  made('toolbox', 'Toolbox', 'garage', 'surface'),
+  kenney('tyre', 'Tyre', 'garage', 'surface', { file: 'kenney-cars/debris-tire.glb', scale: 1.1 }),
+  kenney('goKart', 'Go-Kart', 'garage', 'floor', { file: 'kenney-cars/kart-oobi.glb', scale: 1.1 }),
+  kenney('sportsCar', 'Sports Car', 'garage', 'floor', { file: 'kenney-cars/sedan-sports.glb', scale: 1.4 }),
+
+  // Sim racing (code-built)
+  made('simRig', 'Racing Cockpit', 'racing', 'floor'),
+  made('tripleMonitor', 'Triple Monitors', 'racing', 'floor', { glows: true, screen: { aspect: 16 / 9 } }),
+
+  // Pets (animals: Kenney Cube Pets; pet gear: code-built). Animals sit on the floor or on furniture.
+  kenney('petCat', 'Cat', 'pets', 'surface', { file: 'kenney-pets/animal-cat.glb', scale: 0.18 }),
+  kenney('petDog', 'Dog', 'pets', 'surface', { file: 'kenney-pets/animal-dog.glb', scale: 0.27 }),
+  kenney('petBunny', 'Bunny', 'pets', 'surface', { file: 'kenney-pets/animal-bunny.glb', scale: 0.14 }),
+  kenney('petParrot', 'Parrot', 'pets', 'surface', { file: 'kenney-pets/animal-parrot.glb', scale: 0.19 }),
+  kenney('petChick', 'Chick', 'pets', 'surface', { file: 'kenney-pets/animal-chick.glb', scale: 0.09 }),
+  kenney('petPenguin', 'Penguin Plush', 'pets', 'surface', { file: 'kenney-pets/animal-penguin.glb', scale: 0.2 }),
+  made('catTree', 'Cat Tree', 'pets', 'floor', { surface: true }),
+  made('dogBed', 'Pet Bed', 'pets', 'floor', { surface: true }),
+  made('petBowls', 'Food Bowls', 'pets', 'floor'),
+  made('aquarium', 'Aquarium', 'pets', 'surface', { glows: true }),
 ]
 
 export const catalogById = new Map(CATALOG.map((item) => [item.id, item]))

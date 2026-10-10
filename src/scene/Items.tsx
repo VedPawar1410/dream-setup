@@ -102,7 +102,8 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     // Things that turn while switched on: fan rotors tagged in the model, or the whole model
     const spinners: { obj: Object3D; speed: number; axis: 'y' | 'z' }[] = entry.spin ? [{ obj: object, speed: entry.spin, axis: 'y' }] : []
     object.traverse((o) => {
-      if (o.userData.spin) spinners.push({ obj: o, speed: o.userData.spin, axis: 'z' }) // rotors turn about their own face
+      // Fan rotors turn about their own face (z); other parts can ask for y (e.g. fish swimming laps)
+      if (o.userData.spin) spinners.push({ obj: o, speed: o.userData.spin, axis: o.userData.spinAxis ?? 'z' })
       const mesh = o as Mesh
       if (!mesh.isMesh) return
       for (const mat of (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as MeshStandardMaterial[]) {

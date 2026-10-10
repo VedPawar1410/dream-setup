@@ -1,38 +1,13 @@
-import {
-  BoxGeometry,
-  CanvasTexture,
-  Group,
-  Mesh,
-  MeshStandardMaterial,
-  PlaneGeometry,
-  SRGBColorSpace,
-  TorusGeometry,
-  type MeshStandardMaterialParameters,
-} from 'three'
+import { BoxGeometry, Group, Mesh, PlaneGeometry, TorusGeometry, type MeshStandardMaterial } from 'three'
+import { box, mat, painted } from './build'
 import type { ProceduralId } from './catalog'
+import { aquarium, catTree, dogBed, pegboard, petBowls, simRig, toolbox, tripleMonitor, workbench } from './packs'
 
 // Items built from code instead of loaded from a file: things with glowing or
 // screen-like parts that the Kenney kit doesn't have. Convention matches the models:
 // front faces +z, and named materials become recolour slots in Phase 4.
 
 const ACCENT = '#b18cff'
-
-// Materials whose look comes from a picture or transparency, not a colour you'd pick
-const FIXED = new Set(['glass', 'screen', 'art'])
-
-function mat(name: string, params: MeshStandardMaterialParameters) {
-  const m = new MeshStandardMaterial({ roughness: 0.55, ...params })
-  m.name = name
-  if (FIXED.has(name)) m.userData.noRecolor = true
-  return m
-}
-
-function box(parent: Group, w: number, h: number, d: number, material: MeshStandardMaterial, x = 0, y = 0, z = 0) {
-  const m = new Mesh(new BoxGeometry(w, h, d), material)
-  m.position.set(x, y, z)
-  parent.add(m)
-  return m
-}
 
 const blade = mat('blade', { color: '#9d8fc4', roughness: 0.4, transparent: true, opacity: 0.6 })
 
@@ -57,24 +32,6 @@ function ring(parent: Group, radius: number, material: MeshStandardMaterial, x: 
   }
   fan.add(rotor)
   parent.add(fan)
-}
-
-const textures = new Map<string, CanvasTexture>()
-
-/** Paint a texture once with the 2D canvas API, then share it between every instance. */
-function painted(key: string, w: number, h: number, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void) {
-  let t = textures.get(key)
-  if (!t) {
-    const canvas = document.createElement('canvas')
-    canvas.width = w
-    canvas.height = h
-    draw(canvas.getContext('2d')!, w, h)
-    t = new CanvasTexture(canvas)
-    t.colorSpace = SRGBColorSpace
-    t.anisotropy = 4
-    textures.set(key, t)
-  }
-  return t
 }
 
 function pcTower() {
@@ -256,5 +213,23 @@ export function buildProcedural(id: ProceduralId): Group {
       return poster('shapes', drawShapes)
     case 'ledStrip':
       return ledStrip()
+    case 'workbench':
+      return workbench()
+    case 'pegboard':
+      return pegboard()
+    case 'toolbox':
+      return toolbox()
+    case 'simRig':
+      return simRig()
+    case 'tripleMonitor':
+      return tripleMonitor()
+    case 'catTree':
+      return catTree()
+    case 'dogBed':
+      return dogBed()
+    case 'petBowls':
+      return petBowls()
+    case 'aquarium':
+      return aquarium()
   }
 }

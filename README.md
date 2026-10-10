@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) v2.3 (share links + QR) and v2.4 (living desk) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) v2.3 (share links + QR) v2.4 (living desk) and v2.5 (themed packs) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -45,6 +45,12 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 - Monitors and TVs are live: pick **Wallpaper, Clock, Code or Visualiser** per screen in the Inspector.
 - PC fans and ceiling fans spin while switched on.
 - **Lo-fi player** (music note, bottom-right): five CC0 tracks, play/skip/volume, a spinning record. Click a radio in your room to play or pause. RGB lights pulse with the bass, and the visualiser screen dances along.
+
+**Themed packs** (new catalog tabs)
+- **Kitchen:** fridges, stove, sink, cabinets, island, wall cabinets, hood, microwave, coffee machine, blender, toaster, washer and dryer.
+- **Garage:** workbench, tool wall, toolbox, tyre, go-kart and a sports car.
+- **Pets:** cat, dog, bunny, parrot, chick, penguin plush, cat tree, pet bed, food bowls and an aquarium with swimming fish.
+- **Sim racing:** a racing cockpit (press **F** to sit in it if there's no desk chair) and triple monitors with live screens.
 
 **Atmosphere (top-right)**
 - Five moods (sunny, sunset, rain, snow, night) blend smoothly into each other: light, sky, the view through the windows, and rain or snow falling around the room.
