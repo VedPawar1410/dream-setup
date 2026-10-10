@@ -1,4 +1,5 @@
-import { CATALOG } from '../catalog/catalog'
+import { SUPABASE_URL } from '../backend/config'
+import { CATALOG, isCustomId, registerCustom, type CustomDef } from '../catalog/catalog'
 import type { Weather } from '../scene/atmosphere'
 import { SCREEN_MODES } from '../scene/screens'
 import { FLOOR_MATERIALS, WALL_PATTERNS } from '../scene/surfaces'
@@ -48,8 +49,27 @@ function opening(v: unknown): Opening | null {
   return { id: v.id, kind: v.kind, wall: v.wall as WallSide, offset: v.offset as number, width: v.width as number, height: v.height as number, sill: v.sill as number }
 }
 
-function item(v: unknown): PlacedItem | null {
-  if (!isObj(v) || !isStr(v.id) || !isStr(v.catalogId) || !CATALOG_IDS.has(v.catalogId)) return null
+const MOUNTS = new Set(['floor', 'surface', 'wall'])
+// Only our own storage bucket: a room file must not make viewers fetch from arbitrary servers
+const MODELS_URL = `${SUPABASE_URL}/storage/v1/object/public/models/`
+
+/**
+ * Uploaded items a room carries. Each valid one is also registered with the catalog here,
+ * since every room (saved, imported or shared) comes through this function before it renders.
+ */
+function customDefs(v: unknown): Record<string, CustomDef> {
+  const out: Record<string, CustomDef> = {}
+  if (!isObj(v)) return out
+  for (const [id, d] of Object.entries(v)) {
+    if (!isCustomId(id) || !isObj(d) || !isStr(d.name) || !isStr(d.url) || !d.url.startsWith(MODELS_URL) || !isNum(d.height) || !MOUNTS.has(d.mount as string)) continue
+    out[id] = { name: d.name.slice(0, 40), url: d.url, height: clamp(d.height, 0.03, 3.9), mount: d.mount as CustomDef['mount'] }
+    registerCustom(id, out[id])
+  }
+  return out
+}
+
+function item(v: unknown, custom: Record<string, CustomDef>): PlacedItem | null {
+  if (!isObj(v) || !isStr(v.id) || !isStr(v.catalogId) || !(CATALOG_IDS.has(v.catalogId) || custom[v.catalogId])) return null
   if (![v.x, v.z, v.rot].every(isNum)) return null
   const out: PlacedItem = { id: v.id, catalogId: v.catalogId, x: v.x as number, z: v.z as number, rot: v.rot as number, parentId: isStr(v.parentId) ? v.parentId : null }
   if (isObj(v.wall)) {
@@ -89,6 +109,8 @@ export function migrate(raw: unknown): RoomDoc {
   const walls = isObj(s.walls) ? s.walls : {}
 
   const atmosphere = isObj(raw.atmosphere) ? raw.atmosphere : {}
+  const custom = customDefs(raw.custom)
+  const items = withoutOrphans(raw.items.map((v) => item(v, custom)).filter((it): it is PlacedItem => !!it))
   return {
     version: 1,
     shell: {
@@ -99,11 +121,12 @@ export function migrate(raw: unknown): RoomDoc {
       floor: floorFinish(s.floor, s.floorColor),
       openings: Array.isArray(s.openings) ? s.openings.map(opening).filter((o): o is Opening => !!o) : [],
     },
-    items: withoutOrphans(raw.items.map(item).filter((it): it is PlacedItem => !!it)),
+    items,
     atmosphere: {
       weather: WEATHERS.includes(atmosphere.weather as Weather) ? (atmosphere.weather as Weather) : 'sunny',
       rgbCycle: atmosphere.rgbCycle === true,
     },
+    ...(Object.keys(custom).length > 0 && { custom }),
   }
 }
 

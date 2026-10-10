@@ -1,5 +1,5 @@
 export type Mount = 'floor' | 'surface' | 'wall' | 'ceiling'
-export type Category = 'desk' | 'seating' | 'tables' | 'beds' | 'storage' | 'lighting' | 'decor' | 'plants' | 'kitchen' | 'garage' | 'pets' | 'racing'
+export type Category = 'desk' | 'seating' | 'tables' | 'beds' | 'storage' | 'lighting' | 'decor' | 'plants' | 'kitchen' | 'garage' | 'pets' | 'racing' | 'mine'
 export type ProceduralId =
   | 'pcTower'
   | 'monitorWide'
@@ -43,7 +43,11 @@ export type CatalogItem = {
   spin?: number
   /** Clicking it in view mode plays or pauses the lo-fi player. */
   music?: boolean
-  model: { kind: 'glb'; file: string; scale: number; yaw: number } | { kind: 'procedural'; build: ProceduralId }
+  model:
+    | { kind: 'glb'; file: string; scale: number; yaw: number }
+    | { kind: 'procedural'; build: ProceduralId }
+    // Your own uploads: a GLB at a URL, scaled so it stands `height` metres tall
+    | { kind: 'url'; url: string; height: number }
 }
 
 export const CATEGORIES: { id: Category; label: string }[] = [
@@ -60,6 +64,7 @@ export const CATEGORIES: { id: Category; label: string }[] = [
   { id: 'garage', label: 'Garage' },
   { id: 'pets', label: 'Pets' },
   { id: 'racing', label: 'Sim Racing' },
+  { id: 'mine', label: 'My items' },
 ]
 
 // Kenney's furniture is modelled at roughly half scale: ×1.9 puts a desk top at a real 73 cm.
@@ -221,3 +226,27 @@ export const CATALOG: CatalogItem[] = [
 ]
 
 export const catalogById = new Map(CATALOG.map((item) => [item.id, item]))
+
+// ---------- Your own items ----------
+
+/** What a room needs to show one of your uploads: kept inside the room, so shared and exported rooms carry it. */
+export type CustomDef = { name: string; url: string; height: number; mount: 'floor' | 'surface' | 'wall' }
+
+export const CUSTOM_PREFIX = 'custom:'
+export const isCustomId = (id: string) => id.startsWith(CUSTOM_PREFIX)
+
+/** Make an upload known to the catalog (idempotent), so it can render and be placed. */
+export function registerCustom(catalogId: string, def: CustomDef): CatalogItem {
+  const existing = catalogById.get(catalogId)
+  if (existing) return existing
+  const item: CatalogItem = { id: catalogId, name: def.name, category: 'mine', mount: def.mount, model: { kind: 'url', url: def.url, height: def.height } }
+  catalogById.set(catalogId, item)
+  return item
+}
+
+/** The definition to store in a room for a custom catalog entry. */
+export function customDefOf(catalogId: string): CustomDef | undefined {
+  const item = catalogById.get(catalogId)
+  if (!item || item.model.kind !== 'url' || item.mount === 'ceiling') return undefined
+  return { name: item.name, url: item.model.url, height: item.model.height, mount: item.mount }
+}

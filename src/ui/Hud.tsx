@@ -11,6 +11,7 @@ import { refreshCurrentThumbnail, useSaves } from '../persistence/saves'
 import { exitFirstPerson, toggleFirstPerson } from '../scene/firstPerson'
 import { exitPhoto, togglePhoto } from '../scene/photo'
 import { AccountMenu, ImportOffer } from './AccountMenu'
+import AddItemPanel, { ArrivalToast } from './AddItemPanel'
 import AuthPanel from './AuthPanel'
 import BlueprintPanel from './BlueprintPanel'
 import CatalogPanel from './CatalogPanel'
@@ -186,6 +187,8 @@ export default function Hud() {
       <SharePanel />
       <AuthPanel />
       <ImportOffer />
+      <AddItemPanel />
+      <ArrivalToast />
       <PhotoBar />
       <Tour />
       <div className="dock">

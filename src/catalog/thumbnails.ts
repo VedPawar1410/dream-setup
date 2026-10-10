@@ -46,6 +46,9 @@ async function pump() {
   pumping = false
 }
 
+/** A one-off render (e.g. previewing an upload before it's saved). */
+export const thumbnailOf = (item: CatalogItem) => render(item)
+
 const viewDir = new Vector3(0.9, 0.75, 1.3).normalize() // from the front-right, slightly above
 
 async function render(item: CatalogItem) {

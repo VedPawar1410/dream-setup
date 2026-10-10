@@ -5,8 +5,10 @@ import App from './App.tsx'
 import { runSplash } from './anim/splash'
 import { initSound } from './audio/sound'
 import { startingBackend } from './backend/auth'
+import { isUploadPage } from './backend/customItems'
 import { bootShared, sharedTokenInUrl } from './backend/share'
 import { bootSaves } from './persistence/saves'
+import { useUi } from './store/uiStore'
 
 runSplash()
 
@@ -17,6 +19,8 @@ const shareToken = sharedTokenInUrl()
 if (shareToken) await bootShared(shareToken)
 else await bootSaves(await startingBackend())
 initSound()
+// Opened from the "upload from phone" QR code: go straight to the upload panel
+if (isUploadPage()) useUi.setState({ addItemOpen: true })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

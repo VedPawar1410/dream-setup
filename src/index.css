@@ -2454,3 +2454,172 @@ kbd {
   flex-wrap: wrap;
   overflow: visible;
 }
+
+/* ---------- v2.6: your own items ---------- */
+
+.rooms.add-item {
+  width: min(560px, 100%);
+  overflow-y: auto;
+}
+
+.scan-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+.scan-steps b {
+  color: var(--ink);
+}
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px;
+  border-radius: 16px;
+  border: 1.5px dashed rgb(177 140 255 / 0.5);
+  background: rgb(177 140 255 / 0.08);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.drop:hover {
+  background: rgb(177 140 255 / 0.16);
+  border-color: var(--accent);
+}
+
+.drop.busy {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.drop svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.item-details {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 18px;
+}
+
+.item-preview {
+  width: 180px;
+  height: 180px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #3a3050, #1d1728);
+}
+
+.item-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.item-actions {
+  grid-column: 1 / -1;
+}
+
+.mount-pick {
+  display: grid;
+  gap: 6px;
+}
+
+.mount-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.mount-opt span {
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+.mount-opt.active {
+  border-color: rgb(177 140 255 / 0.6);
+  background: rgb(177 140 255 / 0.16);
+}
+
+.add-card .thumb {
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed rgb(177 140 255 / 0.45);
+}
+
+.add-card svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.card {
+  position: relative;
+}
+
+.card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(23 18 31 / 0.85);
+  color: #ff9db5;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.card:hover .card-remove,
+.card:focus-visible .card-remove {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .item-details {
+    grid-template-columns: 1fr;
+  }
+  .item-preview {
+    width: 100%;
+    height: 200px;
+  }
+}

@@ -48,6 +48,8 @@ type UiState = {
   viewing: Viewing | null
   /** The room whose share sheet is open. */
   shareOpen: string | null
+  /** The "add your own item" panel. */
+  addItemOpen: boolean
 }
 
 export type Viewing = { owner: string; name: string } | { missing: true }
@@ -73,4 +75,5 @@ export const useUi = create<UiState>(() => ({
   importOffer: 0,
   viewing: null,
   shareOpen: null,
+  addItemOpen: false,
 }))

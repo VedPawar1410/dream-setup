@@ -37,7 +37,9 @@ export function loadPrototype(item: CatalogItem): Promise<Prototype> {
     const raw =
       m.kind === 'glb'
         ? loader.loadAsync(`${import.meta.env.BASE_URL}models/${m.file}`).then((gltf) => normalize(withoutAtlasSlots(gltf.scene), m.scale, m.yaw))
-        : Promise.resolve(normalize(buildProcedural(m.build), 1, 0))
+        : m.kind === 'url'
+          ? loader.loadAsync(m.url).then((gltf) => normalize(withoutAtlasSlots(gltf.scene), m.height / rawHeight(gltf.scene), 0))
+          : Promise.resolve(normalize(buildProcedural(m.build), 1, 0))
     p = raw
       .catch((err) => {
         // A missing file shouldn't take the whole room down: show a placeholder box instead.
@@ -67,6 +69,19 @@ function addScreen(proto: Prototype, aspect: number, r: { w: number; h: number; 
   screen.position.set(0, r.y * size.y, (r.z - 0.5) * size.z + size.z / 2 + 0.002)
   screen.castShadow = false
   proto.object.add(screen)
+}
+
+/** Load a GLB just to read its authored size (e.g. an upload, before it's saved). */
+export async function measureModel(url: string) {
+  const gltf = await loader.loadAsync(url)
+  gltf.scene.updateMatrixWorld(true)
+  return new Box3().setFromObject(gltf.scene).getSize(new Vector3())
+}
+
+/** A model's height as authored. Phone scans are usually in metres, but not always. */
+export function rawHeight(model: Object3D) {
+  model.updateMatrixWorld(true)
+  return Math.max(new Box3().setFromObject(model).getSize(new Vector3()).y, 1e-3)
 }
 
 /**
