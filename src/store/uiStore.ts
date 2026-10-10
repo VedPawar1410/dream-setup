@@ -40,7 +40,13 @@ type UiState = {
   photoBokeh: number
   /** The first-visit tour (also replayable from settings). */
   tourOpen: boolean
+  /** Which sign-in screen is open, if any. */
+  authOpen: AuthView | null
+  /** Guest rooms in this browser that a just-signed-in account could take in (0 = no offer). */
+  importOffer: number
 }
+
+export type AuthView = 'signin' | 'signup' | 'forgot' | 'reset'
 
 export const useUi = create<UiState>(() => ({
   mode: 'view',
@@ -57,4 +63,6 @@ export const useUi = create<UiState>(() => ({
   photoFilter: 'natural',
   photoBokeh: 2,
   tourOpen: false,
+  authOpen: null,
+  importOffer: 0,
 }))

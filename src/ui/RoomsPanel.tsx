@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
 import { play } from '../audio/sound'
+import { backendConfigured } from '../backend/supabase'
 import {
   deleteRoom,
   duplicateRoom,
@@ -35,6 +36,7 @@ export default function RoomsPanel() {
   const list = useSaves((s) => s.list)
   const currentId = useSaves((s) => s.currentId)
   const available = useSaves((s) => s.available)
+  const where = useSaves((s) => s.where)
   const [error, setError] = useState<string | null>(null)
   const overlay = useRef<HTMLDivElement>(null)
   const fileInput = useRef<HTMLInputElement>(null)
@@ -69,7 +71,24 @@ export default function RoomsPanel() {
     >
       <section className="rooms" role="dialog" aria-modal="true" aria-label="My rooms">
         <header className="rooms-head">
-          <h2>My rooms</h2>
+          <div>
+            <h2>My rooms</h2>
+            <p className="rooms-where">
+              {where === 'cloud' ? (
+                'Saved to your account: open them on any device you sign in on.'
+              ) : backendConfigured ? (
+                <>
+                  Saved in this browser only.{' '}
+                  <button className="link-btn" onClick={() => useUi.setState({ roomsOpen: false, authOpen: 'signin' })}>
+                    Sign in
+                  </button>{' '}
+                  to keep them in an account.
+                </>
+              ) : (
+                'Saved in this browser.'
+              )}
+            </p>
+          </div>
           <button className="icon-btn small" data-sound="none" onClick={close} aria-label="Close">
             <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
           </button>

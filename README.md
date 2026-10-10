@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 complete; v2.1 (undo/redo, resizable items) in progress. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 complete; v2.1 (editing upgrades) and v2.2 (accounts, cloud saves, installable app) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -47,6 +47,8 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 - **RGB** sends every RGB part through the rainbow.
 
 **Saving (automatic)**
+- **Sign in** (next to the room name) to keep your rooms in your account, on every device. Guests still save in this browser, and signing in offers to copy those rooms over.
+- Install it as an app: Chrome/Edge show an install icon in the address bar; on a phone use "Add to Home Screen".
 - Your room saves itself in this browser a moment after every change (IndexedDB; nothing leaves your machine).
 - Click the room name under the title, or press **M**, for **My rooms**: open, rename (double-click), duplicate or delete rooms, start a new or empty room, and export/import a room as a `.dreamroom.json` file.
 
@@ -82,7 +84,7 @@ npm run lint     # oxlint
 npm run build    # type-check + production build into dist/
 ```
 
-Stack: Vite · React 19 · TypeScript · React Three Fiber + drei · GSAP · Zustand · IndexedDB (idb).
+Stack: Vite · React 19 · TypeScript · React Three Fiber + drei · GSAP · Zustand · IndexedDB (idb) · Supabase (auth + Postgres with row-level security; schema in `supabase/migrations/`).
 Pushes to `main` deploy to GitHub Pages via `.github/workflows/deploy.yml`.
 
 ## Features
