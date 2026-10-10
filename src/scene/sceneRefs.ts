@@ -5,7 +5,7 @@ import type { WallSide } from '../store/roomStore'
 // to reach. Components register on mount and unregister on unmount.
 
 /** How far each wall is cut away (0 = full height, 1 = stub). RoomShell writes it every frame. */
-export const wallCut: Record<WallSide, number> = { north: 0, east: 0, south: 0, west: 0 }
+export const wallCut: Record<WallSide, number> = {}
 
 /** Live scene objects per opening id, so UI code can animate one (e.g. shrink it before deleting). */
 export const openingObjects = new Map<string, Object3D>()

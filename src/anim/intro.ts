@@ -10,8 +10,9 @@ import { gsap, reducedMotion } from './gsap'
  */
 export const intro = {
   room: { p: 0 },
-  // One entry per wall, in the order north, east, south, west. 0 = flat, 1 = full height.
-  walls: [{ h: 0 }, { h: 0 }, { h: 0 }, { h: 0 }],
+  // One entry per wall, in wall order (north, east, south, west, then any extra walls of
+  // an L or a divider). 0 = flat, 1 = full height.
+  walls: Array.from({ length: 8 }, () => ({ h: 0 })),
   /** Camera moves that would fight the intro's swoop wait for this. */
   done: false,
 }

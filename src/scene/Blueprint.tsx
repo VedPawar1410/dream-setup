@@ -1,13 +1,14 @@
 import { useCursor } from '@react-three/drei'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CanvasTexture, Plane, RepeatWrapping, Vector3, type Group, type Mesh, type MeshBasicMaterial } from 'three'
+import { CanvasTexture, Plane, RepeatWrapping, ShapeGeometry, Vector3, type Group, type Mesh, type MeshBasicMaterial } from 'three'
 import { gsap, useGSAP } from '../anim/gsap'
 import { useRoom } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { cancelCarry, drop, removeSelected, select, setMode, toggleBlueprint } from './blueprintActions'
 import { setCameraLocked } from './camera'
 import { ACCENT, THICKNESS } from './dimensions'
+import { outlineShape } from './wallGeometry'
 import { noRaycast } from './sceneRefs'
 
 const HANDLE_GAP = 0.5 // from a wall's outer face to its resize handle
@@ -95,23 +96,26 @@ function makeGridTexture() {
 }
 
 function FloorGrid() {
-  const { width, depth } = useRoom((s) => s.doc.shell)
+  const { width, depth, shape } = useRoom((s) => s.doc.shell)
   const mesh = useRef<Mesh>(null!)
   const texture = useMemo(() => makeGridTexture(), [])
   useEffect(() => () => texture.dispose(), [texture])
+  // The grid follows the floor's outline (an L leaves its cut-out bare). Shape UVs are in
+  // metres, so one texture repeat is one metre.
+  const geometry = useMemo(() => new ShapeGeometry(outlineShape({ width, depth, shape }, 0)), [width, depth, shape])
+  useEffect(() => () => geometry.dispose(), [geometry])
 
   useFrame(() => {
     const m = mesh.current
     m.visible = reveal.p > 0.001
     const material = m.material as MeshBasicMaterial
     material.opacity = reveal.p * 0.5
-    material.map!.repeat.set(width, depth) // 1 repeat per metre
+    material.map!.repeat.set(1, 1)
   })
 
   // depthWrite off: the grid is a decal, so ambient occlusion shouldn't see it
   return (
-    <mesh ref={mesh} rotation-x={-Math.PI / 2} position={[0, 0.003, 0]} raycast={noRaycast}>
-      <planeGeometry args={[width, depth]} />
+    <mesh ref={mesh} geometry={geometry} rotation-x={-Math.PI / 2} position={[0, 0.003, 0]} raycast={noRaycast}>
       <meshBasicMaterial map={texture} color={ACCENT} transparent opacity={0} depthWrite={false} />
     </mesh>
   )

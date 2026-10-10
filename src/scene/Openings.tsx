@@ -1,5 +1,5 @@
 import { useCursor } from '@react-three/drei'
-import type { ThreeEvent } from '@react-three/fiber'
+import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Group, Plane } from 'three'
 import { gsap, useGSAP } from '../anim/gsap'
@@ -138,11 +138,17 @@ function WindowGlass({ width, height, clip }: { width: number; height: number; c
 }
 
 function Door({ opening: o, thickness, clip, tint }: PartProps) {
+  // When the wall is cut away below the top of the door, a clipped leaf shows its hollow
+  // inside; the doorway reads better open, so the leaf steps aside until the wall is back
+  const leaf = useRef<Group>(null!)
+  useFrame(() => {
+    leaf.current.visible = clip[0].constant > o.sill + o.height - 0.02
+  })
   return (
     <>
       <Frame width={o.width} height={o.height} depth={thickness + 0.04} clip={clip} color={tint ?? FRAME_COLOR} openBottom />
       {/* Leaf sits towards the room side of the reveal */}
-      <group position={[0, -FRAME / 4, thickness / 2 - 0.035]}>
+      <group ref={leaf} position={[0, -FRAME / 4, thickness / 2 - 0.035]}>
         <mesh castShadow receiveShadow>
           <boxGeometry args={[o.width - FRAME * 1.5, o.height - FRAME * 0.75, 0.04]} />
           <meshStandardMaterial color={DOOR_COLOR} roughness={0.6} clippingPlanes={clip} />

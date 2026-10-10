@@ -1,6 +1,7 @@
-import { useRef, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
-import { cancelCarry, removeSelected, startAdding } from '../scene/blueprintActions'
+import { cancelCarry, removeSelected, setRoomShape, startAdding, updateRoomShape } from '../scene/blueprintActions'
+import { L_LIMITS, RECT, SPLIT_MIN_ROOM, THICKNESS, type Corner, type RoomShape } from '../store/layout'
 import { useRoom, type Opening } from '../store/roomStore'
 import { OPENING_LIMITS, ROOM } from '../store/rules'
 import { useUi } from '../store/uiStore'
@@ -45,6 +46,8 @@ export default function BlueprintPanel() {
         <Slider label="Depth" value={shell.depth} min={ROOM.min} max={ROOM.max} step={0.1} onChange={(depth) => resize({ depth })} />
         <Slider label="Height" value={shell.height} min={ROOM.minHeight} max={ROOM.maxHeight} step={0.05} onChange={(height) => resize({ height })} />
       </section>
+
+      <ShapeSection />
 
       <section className="panel-section">
         <h2>Add</h2>
@@ -95,6 +98,65 @@ export default function BlueprintPanel() {
         </section>
       )}
     </aside>
+  )
+}
+
+const SHAPES: { id: RoomShape['kind']; label: string }[] = [
+  { id: 'rect', label: 'Rectangle' },
+  { id: 'l', label: 'L-shape' },
+  { id: 'split', label: 'Two rooms' },
+]
+
+const CORNERS: { id: Corner; label: string }[] = [
+  { id: 'nw', label: 'NW' },
+  { id: 'ne', label: 'NE' },
+  { id: 'sw', label: 'SW' },
+  { id: 'se', label: 'SE' },
+]
+
+/** Rectangle, L-shape (which corner is cut out, and how much) or two rooms (where the divider is). */
+function ShapeSection() {
+  const shell = useRoom((s) => s.doc.shell)
+  const shape = shell.shape ?? RECT
+  const [error, setError] = useState<string | null>(null)
+  const pick = (kind: RoomShape['kind']) => setError(setRoomShape(kind))
+
+  return (
+    <section className="panel-section">
+      <h2>Shape</h2>
+      <div className="seg three" role="radiogroup" aria-label="Room shape">
+        {SHAPES.map((s) => (
+          <button key={s.id} className={`seg-btn${shape.kind === s.id ? ' active' : ''}`} role="radio" aria-checked={shape.kind === s.id} data-sound="toggle" onClick={() => pick(s.id)}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+      {shape.kind === 'l' && (
+        <>
+          <div className="targets" aria-label="Cut-out corner">
+            {CORNERS.map((c) => (
+              <button key={c.id} className={`chip${shape.corner === c.id ? ' active' : ''}`} data-sound="toggle" onClick={() => updateRoomShape({ ...shape, corner: c.id })}>
+                {c.label}
+              </button>
+            ))}
+          </div>
+          <Slider label="Cut-out width" value={shape.cutW} min={L_LIMITS.minCut} max={shell.width - L_LIMITS.minLeg} step={0.1} onChange={(cutW) => updateRoomShape({ ...shape, cutW })} />
+          <Slider label="Cut-out depth" value={shape.cutD} min={L_LIMITS.minCut} max={shell.depth - L_LIMITS.minLeg} step={0.1} onChange={(cutD) => updateRoomShape({ ...shape, cutD })} />
+        </>
+      )}
+      {shape.kind === 'split' && (
+        // Shown as the west room's width, which is easier to picture than a coordinate
+        <Slider
+          label="West room"
+          value={shape.at + shell.width / 2 - THICKNESS / 2}
+          min={SPLIT_MIN_ROOM}
+          max={shell.width - SPLIT_MIN_ROOM - THICKNESS}
+          step={0.1}
+          onChange={(v) => updateRoomShape({ kind: 'split', at: v - shell.width / 2 + THICKNESS / 2 })}
+        />
+      )}
+      {error && <p className="rooms-error">{error}</p>}
+    </section>
   )
 }
 

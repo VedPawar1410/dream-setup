@@ -1,7 +1,8 @@
 import { Euler, Matrix4, Plane, Quaternion, Vector3, type Object3D, type Raycaster } from 'three'
 import { catalogById } from '../catalog/catalog'
 import { sizeOfItem } from '../catalog/models'
-import { halfExtents, rectsOverlap, spansOverlap, type Size } from '../store/itemRules'
+import { halfExtents, onFloor as fitsFloor, rectsOverlap, spansOverlap, type Size } from '../store/itemRules'
+import { blockedAreas, wallsOf } from '../store/layout'
 import { useRoom, type PlacedItem, type WallSide } from '../store/roomStore'
 import { innerLength } from '../store/rules'
 import type { CarryItem } from '../store/uiStore'
@@ -21,7 +22,6 @@ export type Candidate =
 export const placement: { candidate: Candidate | null; valid: boolean } = { candidate: null, valid: false }
 
 const SNAP = 0.15 // closer than this to a wall snaps flush against it
-const SIDES: WallSide[] = ['north', 'east', 'south', 'west']
 const floorPlane = new Plane(new Vector3(0, 1, 0), 0)
 const UP = new Vector3(0, 1, 0)
 const ONE = new Vector3(1, 1, 1)
@@ -80,7 +80,21 @@ function onFloor(ray: Raycaster, size: Size, rot: number, kind: 'floor' | 'ceili
     else if (r + limit < SNAP) r = -limit
     return r
   }
-  return { kind, x: fit(v.x, width / 2 - hx), z: fit(v.z, depth / 2 - hz), rot }
+  const c: Candidate = { kind, x: fit(v.x, width / 2 - hx), z: fit(v.z, depth / 2 - hz), rot }
+  // An L's cut-out or a divider: slide out of it on whichever side is nearest
+  for (const b of blockedAreas(useRoom.getState().doc.shell)) {
+    const pushes = [
+      { d: c.x + hx - b.x0, x: b.x0 - hx, z: c.z },
+      { d: b.x1 - (c.x - hx), x: b.x1 + hx, z: c.z },
+      { d: c.z + hz - b.z0, x: c.x, z: b.z0 - hz },
+      { d: b.z1 - (c.z - hz), x: c.x, z: b.z1 + hz },
+    ]
+    if (pushes.some((p) => p.d <= 0)) continue // not overlapping
+    const best = pushes.reduce((a, p) => (p.d < a.d ? p : a))
+    c.x = best.x
+    c.z = best.z
+  }
+  return c
 }
 
 const ownerOf = (o: Object3D | null): string | null => {
@@ -120,7 +134,7 @@ function onSurface(ray: Raycaster, size: Size, rot: number, ignore: Set<string>)
 
 function onWall(ray: Raycaster, size: Size): Candidate | null {
   let best: { side: WallSide; distance: number; local: Vector3 } | null = null
-  for (const side of SIDES) {
+  for (const { id: side } of wallsOf(useRoom.getState().doc.shell)) {
     if (wallCut[side] > 0.5) continue // can't see it, so can't hang things on it
     const mesh = wallMeshes.get(side)
     const group = wallGroups.get(side)
@@ -173,7 +187,8 @@ export function isValid(c: Candidate, item: Pick<PlacedItem, 'catalogId' | 'size
     const parent = items.find((it) => it.id === parentId)
     const top = parent && sizeOfItem(parent)
     if (!top || Math.abs(c.x) + hx > top.x / 2 + TOL || Math.abs(c.z) + hz > top.z / 2 + TOL) return false
-  } else if (Math.abs(c.x) + hx > shell.width / 2 + TOL || Math.abs(c.z) + hz > shell.depth / 2 + TOL || size.y > shell.height + TOL) {
+  } else if (size.y > shell.height + TOL || !fitsFloor(shell, { x: c.x, z: c.z, hw: size.x / 2, hd: size.z / 2, rot: c.rot })) {
+    // Inside the room and clear of an L's cut-out or the divider
     return false
   }
   if (entry.flat) return true // rugs go under anything

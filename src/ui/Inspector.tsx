@@ -7,6 +7,7 @@ import { resetItemColors, resizeItem, setItemColor, setItemScreen, setPaintTarge
 import { SCREEN_MODES } from '../scene/screens'
 import { FLOOR_MATERIALS, FLOOR_SWATCHES, floorPreview, WALL_PATTERNS, WALL_SWATCHES, wallPreview } from '../scene/surfaces'
 import { SCALE_MAX, SCALE_MIN, type Scale } from '../store/itemRules'
+import { WALL_LABELS, wallsOf } from '../store/layout'
 import { useRoom, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import ColorPicker from './ColorPicker'
@@ -221,13 +222,6 @@ function ItemColorSlots({ id, catalogId, colors }: { id: string; catalogId: stri
   )
 }
 
-const TARGETS: { id: WallSide | 'all'; label: string }[] = [
-  { id: 'all', label: 'All walls' },
-  { id: 'north', label: 'N' },
-  { id: 'east', label: 'E' },
-  { id: 'south', label: 'S' },
-  { id: 'west', label: 'W' },
-]
 
 function RoomStyle() {
   const tab = useUi((s) => s.roomTab)
@@ -235,8 +229,10 @@ function RoomStyle() {
   const shell = useRoom((s) => s.doc.shell)
   const setWallFinish = useRoom((s) => s.setWallFinish)
   const setFloor = useRoom((s) => s.setFloor)
+  // Every wall the room has (an L adds two inner walls, two rooms add the divider)
+  const targets: { id: WallSide | 'all'; label: string }[] = [{ id: 'all', label: 'All walls' }, ...wallsOf(shell).map((w) => ({ id: w.id, label: WALL_LABELS[w.id] ?? w.id }))]
   // With "All walls" the controls show one wall's finish as the starting point
-  const wall = shell.walls[target === 'all' ? 'north' : target]
+  const wall = shell.walls[target === 'all' ? 'north' : target] ?? shell.walls.north
 
   return (
     <section className="panel-section">
@@ -252,7 +248,7 @@ function RoomStyle() {
       {tab === 'walls' ? (
         <>
           <div className="targets" aria-label="Which walls">
-            {TARGETS.map((t) => (
+            {targets.map((t) => (
               <button key={t.id} className={`chip${target === t.id ? ' active' : ''}`} onClick={() => setPaintTarget(t.id)} title={t.id === 'all' ? 'All walls' : `${t.id} wall`}>
                 {t.label}
               </button>
