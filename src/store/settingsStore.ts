@@ -8,6 +8,8 @@ type Settings = {
   sound: boolean
   quality: Quality
   tourDone: boolean
+  /** Lo-fi player volume, 0–1. */
+  musicVolume: number
   /** What "auto" has settled on for this device. Measured live, never saved. */
   autoTier: Tier
 }
@@ -18,11 +20,11 @@ type Settings = {
 // being blocked: the settings just won't stick.
 export const useSettings = create<Settings>()(
   persist(
-    (): Settings => ({ sound: true, quality: 'auto', tourDone: false, autoTier: 'high' }),
+    (): Settings => ({ sound: true, quality: 'auto', tourDone: false, musicVolume: 0.6, autoTier: 'high' }),
     {
       name: 'dream-setup:settings',
       storage: createJSONStorage(() => localStorage),
-      partialize: ({ sound, quality, tourDone }) => ({ sound, quality, tourDone }),
+      partialize: ({ sound, quality, tourDone, musicVolume }) => ({ sound, quality, tourDone, musicVolume }),
     },
   ),
 )

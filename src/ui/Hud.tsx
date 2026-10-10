@@ -16,6 +16,7 @@ import BlueprintPanel from './BlueprintPanel'
 import CatalogPanel from './CatalogPanel'
 import Inspector from './Inspector'
 import ModeSwitch from './ModeSwitch'
+import MusicPlayer from './MusicPlayer'
 import PhotoBar from './PhotoBar'
 import RoomsPanel from './RoomsPanel'
 import SelectionBar from './SelectionBar'
@@ -224,6 +225,7 @@ export default function Hud() {
           <button className="icon-btn" data-sound="none" onClick={togglePhoto} aria-label="Photo mode (P)" title="Photo mode (P)">
             <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" /></svg>
           </button>
+          <MusicPlayer />
           <SettingsMenu />
         </div>
       </div>

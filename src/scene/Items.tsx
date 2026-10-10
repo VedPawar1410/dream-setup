@@ -29,7 +29,9 @@ import { THICKNESS } from './dimensions'
 import { applyColors } from './colors'
 import { applyLook, type Look } from './looks'
 import { candidateMatrix, placement, solvePlacement } from './placementSolver'
+import { musicLevel, togglePlay } from '../audio/music'
 import { atmo } from './atmosphere'
+import { screenTexture } from './screens'
 import { clippedRaycast, itemAnims, itemObjects, rgbMaterials } from './sceneRefs'
 
 const NONE: PlacedItem[] = []
@@ -96,17 +98,30 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     const lamps: MeshStandardMaterial[] = []
     const glowing: MeshStandardMaterial[] = []
     const rgb: MeshStandardMaterial[] = []
+    const screens: MeshStandardMaterial[] = []
+    // Things that turn while switched on: fan rotors tagged in the model, or the whole model
+    const spinners: { obj: Object3D; speed: number; axis: 'y' | 'z' }[] = entry.spin ? [{ obj: object, speed: entry.spin, axis: 'y' }] : []
     object.traverse((o) => {
+      if (o.userData.spin) spinners.push({ obj: o, speed: o.userData.spin, axis: 'z' }) // rotors turn about their own face
       const mesh = o as Mesh
       if (!mesh.isMesh) return
       for (const mat of (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as MeshStandardMaterial[]) {
         if (mat.name === 'lamp') lamps.push(mat)
         else if (mat.userData.glow) glowing.push(mat)
         if (mat.name === 'rgb') rgb.push(mat)
+        if (mat.name === 'screen') screens.push(mat)
       }
     })
-    return { lamps, glowing, rgb }
-  }, [object])
+    return { lamps, glowing, rgb, screens, spinners }
+  }, [object, entry.spin])
+
+  // Live screens: point the screen's glow at the shared texture for its mode
+  const screenMode = item.screen ?? 'wallpaper'
+  useEffect(() => {
+    if (!entry.screen || ghost) return
+    // oxlint-disable-next-line react/immutability
+    for (const m of parts.screens) m.emissiveMap = screenTexture(screenMode, entry.screen.aspect)
+  }, [parts, screenMode, entry.screen, ghost])
 
   // The frame loop reads parts through a ref: it mutates these materials every frame,
   // which is the renderer's business, not React's
@@ -140,16 +155,22 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     { dependencies: [isOn] },
   )
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (!powered) return
     const k = power.current.p
+    // Fans spin up and wind down with the same 0–1 power that dims the lights.
+    // Turning three.js objects every frame is the render loop's job, not React state.
+    // oxlint-disable-next-line react/immutability
+    for (const s of partsRef.current.spinners) s.obj.rotation[s.axis] += s.speed * k * Math.min(delta, 0.05)
     // Lamps matter more as it gets darker outside
     if (light.current && entry.light) light.current.intensity = entry.light.intensity * k * (0.35 + atmo.lamps)
     const { lamps, glowing } = partsRef.current
     for (const m of lamps) m.emissive.setRGB(1, 0.78, 0.45).multiplyScalar(k * (0.25 + atmo.lamps * 0.9))
     // Per-frame mutation of three.js materials is how R3F works; the React-purity rule doesn't apply
     // oxlint-disable-next-line react/immutability
-    for (const m of glowing) m.emissiveIntensity = (m.userData.glowIntensity ?? 1) * k
+    // RGB parts also pulse with the music's bass
+    const beat = 1 + musicLevel.bass * 1.2
+    for (const m of glowing) m.emissiveIntensity = (m.userData.glowIntensity ?? 1) * k * (m.name === 'rgb' ? beat : 1)
   })
   const look: Look = ghost ? 'ghost' : selected ? 'selected' : hovered ? 'hover' : 'normal'
   useEffect(() => applyLook(object, look), [object, look])
@@ -207,7 +228,7 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
     ? {}
     : {
         onPointerOver: (e: ThreeEvent<PointerEvent>) => {
-          if (powered && useUi.getState().mode === 'view') {
+          if ((powered || entry.music) && useUi.getState().mode === 'view') {
             e.stopPropagation()
             setPointing(true)
             return
@@ -224,9 +245,11 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
         },
         // In view mode, clicking a lamp or a screen flips its switch
         onClick: (e: ThreeEvent<MouseEvent>) => {
-          if (!powered || useUi.getState().mode !== 'view' || e.delta > 6) return
+          if ((!powered && !entry.music) || useUi.getState().mode !== 'view' || e.delta > 6) return
           e.stopPropagation()
-          switchPower(item.id)
+          // The radio plays the lo-fi player; everything else flips its power switch
+          if (entry.music) togglePlay()
+          else switchPower(item.id)
         },
         onPointerDown: (e: ThreeEvent<PointerEvent>) => {
           if (!canEdit() || e.button !== 0) return
