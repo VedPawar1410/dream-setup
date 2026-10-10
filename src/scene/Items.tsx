@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { gsap, useGSAP } from '../anim/gsap'
 import { catalogById } from '../catalog/catalog'
 import { instantiate, loadPrototype } from '../catalog/models'
+import { scaled, type Scale } from '../store/itemRules'
 import { useRoom, type PlacedItem } from '../store/roomStore'
 import { useUi, type CarryItem } from '../store/uiStore'
 import { setMode } from './blueprintActions'
@@ -14,6 +15,7 @@ import {
   cancelItemCarry,
   commitPlacement,
   duplicateSelected,
+  nudgeSelectedSize,
   pressEnd,
   pressItem,
   pressMove,
@@ -31,6 +33,7 @@ import { atmo } from './atmosphere'
 import { clippedRaycast, itemAnims, itemObjects, rgbMaterials } from './sceneRefs'
 
 const NONE: PlacedItem[] = []
+const NO_SCALE: Scale = { w: 1, d: 1, h: 1 }
 
 const canEdit = () => {
   const ui = useUi.getState()
@@ -171,10 +174,34 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
       .fromTo(anim.current.scale, { x: 1.08, y: 0.86, z: 1.08 }, { x: 1, y: 1, z: 1, duration: 0.6, ease: 'elastic.out(1, 0.35)' })
   })
 
+  // Resizing: only the model stretches (the `fit` group), so things on top aren't
+  // distorted; they just ride up or down with the top surface. GSAP owns both transforms,
+  // so the change eases in and a re-render can't fight it.
   const size = proto.size
+  const k = item.size ?? NO_SCALE
+  const fit = useRef<Group>(null!)
+  const top = useRef<Group>(null!)
+  const sized = useRef(false)
+  useGSAP(
+    () => {
+      const scale = { x: k.w, y: k.h, z: k.d }
+      const lift = { y: size.y * k.h }
+      if (!sized.current) {
+        sized.current = true
+        gsap.set(fit.current.scale, scale)
+        gsap.set(top.current.position, lift)
+        return
+      }
+      gsap.to(fit.current.scale, { ...scale, duration: 0.45, ease: 'back.out(1.7)', overwrite: true })
+      gsap.to(top.current.position, { ...lift, duration: 0.45, ease: 'back.out(1.7)', overwrite: true })
+    },
+    { dependencies: [k.w, k.h, k.d, size.y] },
+  )
+
+  const real = scaled(size, item.size)
   const position: [number, number, number] = item.wall
-    ? [item.wall.along, item.wall.y, THICKNESS / 2 + size.z / 2] // back against the wall
-    : [item.x, item.parentId ? 0 : entry.mount === 'ceiling' ? height - size.y : 0, item.z]
+    ? [item.wall.along, item.wall.y, THICKNESS / 2 + real.z / 2] // back against the wall
+    : [item.x, item.parentId ? 0 : entry.mount === 'ceiling' ? height - real.y : 0, item.z]
 
   const handlers = ghost
     ? {}
@@ -211,12 +238,14 @@ function ItemNode({ item, clip, ghost }: { item: PlacedItem; clip?: Plane[]; gho
   return (
     <group ref={outer} position={position} rotation-y={item.wall ? 0 : item.rot} userData={{ itemId: item.id }} {...handlers}>
       <group ref={anim}>
-        <primitive object={object} />
-        {powered && entry.light && (
-          <pointLight ref={light} position={[0, size.y * entry.light.y, 0]} color="#ffcf94" distance={entry.light.distance} decay={2} intensity={0} />
-        )}
+        <group ref={fit}>
+          <primitive object={object} />
+          {powered && entry.light && (
+            <pointLight ref={light} position={[0, size.y * entry.light.y, 0]} color="#ffcf94" distance={entry.light.distance} decay={2} intensity={0} />
+          )}
+        </group>
         {/* Children sit on this item's top surface */}
-        <group position-y={size.y}>
+        <group ref={top}>
           <ItemList items={children} clip={clip} ghost={ghost} />
         </group>
       </group>
@@ -253,7 +282,7 @@ function Ghost({ carry }: { carry: CarryItem }) {
     // Off any valid target (e.g. a wall item over a window hole) the ghost stays put
     if (result) Object.assign(placement, result)
     const g = root.current
-    g.visible = !!placement.candidate && candidateMatrix(placement.candidate, proto.size, g.matrix)
+    g.visible = !!placement.candidate && candidateMatrix(placement.candidate, scaled(proto.size, carry.size), g.matrix)
     g.matrixWorldNeedsUpdate = true
     if (shownValid.current !== placement.valid) {
       applyLook(g, placement.valid ? 'ghost' : 'ghost-bad')
@@ -263,8 +292,10 @@ function Ghost({ carry }: { carry: CarryItem }) {
 
   return (
     <group ref={root} matrixAutoUpdate={false} visible={false}>
-      <primitive object={object} />
-      <group position-y={proto.size.y}>
+      <group scale={carry.size ? [carry.size.w, carry.size.h, carry.size.d] : 1}>
+        <primitive object={object} />
+      </group>
+      <group position-y={proto.size.y * (carry.size?.h ?? 1)}>
         <ItemList items={children} ghost />
       </group>
     </group>
@@ -314,6 +345,8 @@ function usePlacementInput() {
       if (e.code === 'KeyR') {
         if (ui.carryItem) rotateInHand(e.shiftKey ? -1 : 1)
         else if (ui.selectedItemId) rotateSelected(e.shiftKey ? -1 : 1)
+      } else if ((e.code === 'BracketLeft' || e.code === 'BracketRight') && !ui.carryItem) {
+        nudgeSelectedSize(e.code === 'BracketRight' ? 1 : -1)
       } else if (e.key === 'Escape') {
         if (ui.carryItem) cancelItemCarry()
         else if (ui.selectedItemId) selectItem(null)

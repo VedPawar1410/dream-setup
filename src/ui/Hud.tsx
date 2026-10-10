@@ -3,7 +3,9 @@ import { useEffect, useRef } from 'react'
 import { gsap, useGSAP } from '../anim/gsap'
 import { play } from '../audio/sound'
 import { sceneReady } from '../anim/intro'
+import { undoRedo } from '../scene/blueprintActions'
 import { resetView, rotateQuarter } from '../scene/camera'
+import { useHistory } from '../store/history'
 import { useUi, type Mode } from '../store/uiStore'
 import { refreshCurrentThumbnail, useSaves } from '../persistence/saves'
 import { exitFirstPerson, toggleFirstPerson } from '../scene/firstPerson'
@@ -45,8 +47,10 @@ const HINTS: Record<Mode, { keys: string[]; label: string }[]> = {
     { keys: ['Click'], label: 'Select' },
     { keys: ['Drag'], label: 'Move item' },
     { keys: ['R'], label: 'Rotate' },
+    { keys: ['[', ']'], label: 'Resize' },
     { keys: ['Shift', 'Click'], label: 'Place more' },
     { keys: ['Del'], label: 'Delete' },
+    { keys: ['⌘', 'Z'], label: 'Undo' },
     { keys: ['Esc'], label: 'Back' },
   ],
   blueprint: [
@@ -76,11 +80,21 @@ export default function Hud() {
   const firstPerson = useUi((s) => s.firstPerson)
   const photo = useUi((s) => s.photo)
   const hints = firstPerson ? SEATED_HINTS : HINTS[mode]
+  const canUndo = useHistory((s) => s.canUndo)
+  const canRedo = useHistory((s) => s.canRedo)
+  const editing = mode !== 'view' && !firstPerson
 
   // M opens "My rooms"
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey) return
+      if (e.target instanceof HTMLInputElement) return
+      if (e.metaKey || e.ctrlKey) {
+        if (e.code === 'KeyZ' || (e.code === 'KeyY' && e.ctrlKey)) {
+          e.preventDefault()
+          undoRedo(e.code === 'KeyY' || e.shiftKey ? 1 : -1)
+        }
+        return
+      }
       if (e.code === 'KeyM') openRooms()
       else if (e.code === 'KeyF' && !useUi.getState().photo) toggleFirstPerson()
       else if (e.code === 'KeyP') togglePhoto()
@@ -171,6 +185,16 @@ export default function Hud() {
           ))}
         </div>
         <div className="cam-buttons">
+          {editing && (
+            <div className="history-buttons">
+              <button className="icon-btn" data-sound="none" onClick={() => undoRedo(-1)} disabled={!canUndo} aria-label="Undo (Cmd/Ctrl+Z)" title="Undo (Cmd/Ctrl+Z)">
+                <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+              </button>
+              <button className="icon-btn" data-sound="none" onClick={() => undoRedo(1)} disabled={!canRedo} aria-label="Redo (Shift+Cmd/Ctrl+Z)" title="Redo (Shift+Cmd/Ctrl+Z)">
+                <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5m5 5H9.5a5.5 5.5 0 0 0 0 11H13" /></svg>
+              </button>
+            </div>
+          )}
           <button className="icon-btn" onClick={() => rotateQuarter(-1)} aria-label="Turn left (Q)" title="Turn left (Q)">
             <svg viewBox="0 0 24 24"><path d="M9 6H4v5M4.5 10.5A8 8 0 1 1 6 17" /></svg>
           </button>

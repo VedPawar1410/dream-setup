@@ -144,6 +144,21 @@ L-shaped and multi-room layouts, themed packs (garage, kitchen, pets, sim racing
 
 ---
 
+## 5b. v2 roadmap (accounts, sharing, living desk)
+
+Decided with Ved: Supabase for accounts/data/files (frontend stays on Pages), view-only share links + QR,
+phone-scan upload for your own objects, bundled royalty-free lo-fi music.
+
+| # | Phase | Deliverable |
+|---|---|---|
+| 2.1 | Editing upgrades | Loading %, cute synthesised drop sounds + squash landing, undo/redo, resizable items |
+| 2.2 | Accounts | Supabase auth, cloud saves (IndexedDB stays as offline cache), local → account migration, installable PWA |
+| 2.3 | Sharing | Revocable view-only links (`?s=token`) via a security-definer function, QR codes, viewer mode + "make a copy" |
+| 2.4 | Living desk | Animated monitor screens, spinning fans, lo-fi player with visualiser |
+| 2.5 | Themed packs | Garage, kitchen, pets, sim racing |
+| 2.6 | Your own objects | Upload GLB scans (desktop or phone via QR), set real size, "My items" |
+| 2.7 | L-shaped & multi-room | Footprint as rectangles, wall ids, partitions, migration of every saved room |
+
 ## 6. Risks and tradeoffs
 - **Mixed asset styles:** packs from different authors can clash. *Mitigation:* use Kenney as the
   primary style, shared material overrides, and one lighting setup.

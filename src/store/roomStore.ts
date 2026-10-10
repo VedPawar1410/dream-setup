@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import { itemSizes } from '../catalog/models'
+import { sizeOfItem } from '../catalog/models'
 import type { Weather } from '../scene/atmosphere'
 import type { FloorMaterial, WallPattern } from '../scene/surfaces'
-import { itemMinRoom, openingHitsWallItems, type SizeOf } from './itemRules'
+import { itemMinRoom, openingHitsWallItems, type Scale } from './itemRules'
+import { record } from './history'
 import { clampSize, isValidOpening } from './rules'
 
 // The whole room is one plain, serialisable document. The 3D scene and the HUD only
@@ -44,6 +45,8 @@ export type PlacedItem = {
   colors?: Record<string, string>
   /** Lamps and electronics: switched off when false (on by default). */
   on?: boolean
+  /** Resized: multipliers on the model's width/depth/height. Missing means original size. */
+  size?: Scale
 }
 
 export type WallFinish = { pattern: WallPattern; color: string }
@@ -105,7 +108,7 @@ export const defaultRoom: RoomDoc = {
   atmosphere: { weather: 'sunny', rgbCycle: false },
 }
 
-const sizeOf: SizeOf = (id) => itemSizes.get(id)
+const sizeOf = sizeOfItem
 
 type SizePatch = Partial<Pick<Shell, 'width' | 'depth' | 'height'>>
 
@@ -133,9 +136,16 @@ const SIDES: WallSide[] = ['north', 'east', 'south', 'west']
 
 export const useRoom = create<RoomState>((set, get) => {
   // Always replace, never mutate: Zustand selectors compare by reference, so a new
-  // object is what tells React "this changed".
-  const setShell = (shell: Shell) => set({ doc: { ...get().doc, shell } })
-  const setItems = (items: PlacedItem[]) => set({ doc: { ...get().doc, items } })
+  // object is what tells React "this changed". Edits pass an undo key (same key in quick
+  // succession = one undo step); switching a lamp passes none, so it isn't an undo step.
+  const setShell = (shell: Shell, key: string) => {
+    record(get().doc, key)
+    set({ doc: { ...get().doc, shell } })
+  }
+  const setItems = (items: PlacedItem[], key: string | null) => {
+    if (key) record(get().doc, key)
+    set({ doc: { ...get().doc, items } })
+  }
   const openingFits = (shell: Shell, o: Opening) => isValidOpening(shell, o) && !openingHitsWallItems(o, get().doc.items, sizeOf)
 
   return {
@@ -143,13 +153,13 @@ export const useRoom = create<RoomState>((set, get) => {
 
     resize: (patch) => {
       const { shell, items } = get().doc
-      setShell({ ...shell, ...clampSize(shell, patch, itemMinRoom(items, sizeOf)) })
+      setShell({ ...shell, ...clampSize(shell, patch, itemMinRoom(items, sizeOf)) }, 'resize')
     },
 
     addOpening: (o) => {
       const shell = get().doc.shell
       if (!openingFits(shell, o)) return false
-      setShell({ ...shell, openings: [...shell.openings, o] })
+      setShell({ ...shell, openings: [...shell.openings, o] }, `add:${o.id}`)
       return true
     },
 
@@ -159,18 +169,18 @@ export const useRoom = create<RoomState>((set, get) => {
       if (!current) return false
       const next = { ...current, ...patch }
       if (!openingFits(shell, next)) return false
-      setShell({ ...shell, openings: shell.openings.map((o) => (o.id === id ? next : o)) })
+      setShell({ ...shell, openings: shell.openings.map((o) => (o.id === id ? next : o)) }, `opening:${id}:${Object.keys(patch).join()}`)
       return true
     },
 
     removeOpening: (id) => {
       const shell = get().doc.shell
-      setShell({ ...shell, openings: shell.openings.filter((o) => o.id !== id) })
+      setShell({ ...shell, openings: shell.openings.filter((o) => o.id !== id) }, `remove:${id}`)
     },
 
-    addItem: (item) => setItems([...get().doc.items, item]),
+    addItem: (item) => setItems([...get().doc.items, item], `add:${item.id}`),
 
-    updateItem: (id, patch) => setItems(get().doc.items.map((it) => (it.id === id ? { ...it, ...patch } : it))),
+    updateItem: (id, patch) => setItems(get().doc.items.map((it) => (it.id === id ? { ...it, ...patch } : it)), `item:${id}:${Object.keys(patch).join()}`),
 
     removeItem: (id) => {
       const items = get().doc.items
@@ -185,19 +195,19 @@ export const useRoom = create<RoomState>((set, get) => {
           }
         }
       }
-      setItems(items.filter((it) => !gone.has(it.id)))
+      setItems(items.filter((it) => !gone.has(it.id)), `remove:${id}`)
     },
 
     setWallFinish: (target, patch) => {
       const shell = get().doc.shell
       const walls = { ...shell.walls }
       for (const side of target === 'all' ? SIDES : [target]) walls[side] = { ...walls[side], ...patch }
-      setShell({ ...shell, walls })
+      setShell({ ...shell, walls }, `walls:${target}:${Object.keys(patch).join()}`)
     },
 
     setFloor: (patch) => {
       const shell = get().doc.shell
-      setShell({ ...shell, floor: { ...shell.floor, ...patch } })
+      setShell({ ...shell, floor: { ...shell.floor, ...patch } }, `floor:${Object.keys(patch).join()}`)
     },
 
     setWeather: (weather) => set({ doc: { ...get().doc, atmosphere: { ...get().doc.atmosphere, weather } } }),
@@ -206,7 +216,7 @@ export const useRoom = create<RoomState>((set, get) => {
 
     togglePower: (id) => {
       const item = get().doc.items.find((it) => it.id === id)
-      if (item) setItems(get().doc.items.map((it) => (it.id === id ? { ...it, on: item.on === false } : it)))
+      if (item) setItems(get().doc.items.map((it) => (it.id === id ? { ...it, on: item.on === false } : it)), null)
     },
   }
 })

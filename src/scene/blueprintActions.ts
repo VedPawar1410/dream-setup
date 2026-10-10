@@ -1,7 +1,8 @@
 import { gsap } from '../anim/gsap'
 import { intro } from '../anim/intro'
-import { play } from '../audio/sound'
-import { itemSizes } from '../catalog/models'
+import { boop, play, plop } from '../audio/sound'
+import { sizeOfItem } from '../catalog/models'
+import { redo, undo } from '../store/history'
 import { openingHitsWallItems } from '../store/itemRules'
 import { useRoom, type Opening, type WallSide } from '../store/roomStore'
 import { isValidOpening, offsetLimit, OPENING_DEFAULTS } from '../store/rules'
@@ -27,6 +28,23 @@ export function setMode(mode: Mode) {
   if (mode === 'blueprint' || ui.mode === 'blueprint') setBlueprintView(mode === 'blueprint')
 }
 
+/**
+ * Cmd+Z / Shift+Cmd+Z. Anything in hand is dropped back first, and a selection whose
+ * item or opening no longer exists after the jump is cleared.
+ */
+export function undoRedo(dir: -1 | 1) {
+  const ui = useUi.getState()
+  if (!intro.done || ui.photo || ui.firstPerson) return
+  if (ui.carry) cancelCarry()
+  if (ui.carryItem) cancelItemCarry()
+  if (!(dir < 0 ? undo() : redo())) return
+  play('toggle')
+  const { items, shell } = useRoom.getState().doc
+  const { selectedItemId, selectedId } = useUi.getState()
+  if (selectedItemId && !items.some((it) => it.id === selectedItemId)) useUi.setState({ selectedItemId: null })
+  if (selectedId && !shell.openings.some((o) => o.id === selectedId)) useUi.setState({ selectedId: null })
+}
+
 export const toggleBlueprint = () => setMode(useUi.getState().mode === 'blueprint' ? 'view' : 'blueprint')
 
 export const select = (id: string | null) => useUi.setState({ selectedId: id })
@@ -43,7 +61,7 @@ export function startMoving(o: Opening) {
   const { wall, offset, ...item } = o
   useUi.setState({ carry: { item, isNew: false }, ghost: { wall, offset, valid: true }, selectedId: o.id })
   setCameraLocked(true)
-  play('pickup')
+  boop()
 }
 
 /** The pointer is over `wall` at `rawOffset` along it: slide the ghost there, clamped to the wall. */
@@ -57,7 +75,7 @@ export function hoverWall(wall: WallSide, rawOffset: number, free: boolean) {
   const valid =
     limit >= 0 &&
     isValidOpening(shell, candidate) &&
-    !openingHitsWallItems(candidate, useRoom.getState().doc.items, (id) => itemSizes.get(id))
+    !openingHitsWallItems(candidate, useRoom.getState().doc.items, sizeOfItem)
   useUi.setState({ ghost: { wall, offset, valid } })
 }
 
@@ -70,7 +88,7 @@ export function drop() {
       ? room.addOpening({ ...carry.item, wall: ghost.wall, offset: ghost.offset })
       : room.updateOpening(carry.item.id, { wall: ghost.wall, offset: ghost.offset })
     if (placed) {
-      play('place')
+      plop()
       useUi.setState({ carry: null, ghost: null, selectedId: carry.item.id })
       setCameraLocked(false)
       return
