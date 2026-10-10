@@ -13,7 +13,11 @@ import { itemObjects } from './sceneRefs'
 // "Sit at your desk": the camera flies down an arc to eye height on a chair, then the
 // orbit controls are reconfigured into look-around controls. Leaving reverses all of it.
 
-const SEATS = ['chairDesk', 'chair', 'chairCushion', 'chairModernCushion', 'chairRounded', 'loungeChair', 'loungeChairRelax', 'loungeDesignChair', 'stoolBar', 'benchCushion']
+// Where your eyes go on each kind of seat: height above the floor, and how far back from
+// the seat's centre. A racing cockpit sits low and reclined; everything else is a chair.
+const EYES: Record<string, { height: number; back: number }> = { simRig: { height: 0.98, back: 0.38 } }
+const CHAIR_EYES = { height: 1.18, back: 0.12 }
+const SEATS = ['chairDesk', 'simRig', 'chair', 'chairCushion', 'chairModernCushion', 'chairRounded', 'loungeChair', 'loungeChairRelax', 'loungeDesignChair', 'stoolBar', 'benchCushion']
 const { ACTION } = CameraControlsImpl
 // The dollhouse uses a narrow lens to look isometric; eyes see much wider than that
 const ORBIT_FOV = 30
@@ -32,7 +36,8 @@ function seat() {
     const base = obj.getWorldPosition(new Vector3())
     const yaw = worldYaw(obj)
     const forward = new Vector3(Math.sin(yaw), 0, Math.cos(yaw)) // models face +z
-    const eye = base.add(new Vector3(0, 1.18, 0)).addScaledVector(forward, -0.12) // seated eye height, head over the backrest
+    const { height, back } = EYES[catalogId] ?? CHAIR_EYES
+    const eye = base.add(new Vector3(0, height, 0)).addScaledVector(forward, -back) // seated eye height, head over the backrest
     return { eye, look: eye.clone().addScaledVector(forward, 2).add(new Vector3(0, -0.35, 0)) }
   }
   const eye = new Vector3(0, 1.6, shell.depth / 2 - 0.6)

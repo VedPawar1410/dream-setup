@@ -36,7 +36,7 @@ export function loadPrototype(item: CatalogItem): Promise<Prototype> {
     const m = item.model
     const raw =
       m.kind === 'glb'
-        ? loader.loadAsync(`${import.meta.env.BASE_URL}models/${m.file}`).then((gltf) => normalize(gltf.scene, m.scale, m.yaw))
+        ? loader.loadAsync(`${import.meta.env.BASE_URL}models/${m.file}`).then((gltf) => normalize(withoutAtlasSlots(gltf.scene), m.scale, m.yaw))
         : Promise.resolve(normalize(buildProcedural(m.build), 1, 0))
     p = raw
       .catch((err) => {
@@ -69,6 +69,19 @@ function addScreen(proto: Prototype, aspect: number, r: { w: number; h: number; 
   proto.object.add(screen)
 }
 
+/**
+ * Some model kits (Cube Pets, Car Kit) colour everything from one texture atlas. Tinting
+ * it would recolour the whole model, so those materials offer no colour slots.
+ */
+function withoutAtlasSlots(model: Object3D) {
+  model.traverse((o) => {
+    const mesh = o as Mesh
+    if (!mesh.isMesh) return
+    for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) if ((m as MeshStandardMaterial).map) m.userData.noRecolor = true
+  })
+  return model
+}
+
 function normalize(model: Object3D, scale: number, yaw: number): Prototype {
   model.scale.setScalar(scale)
   model.rotation.y = yaw
@@ -80,10 +93,10 @@ function normalize(model: Object3D, scale: number, yaw: number): Prototype {
   // Shift so the footprint is centred on the origin and the bottom rests on y = 0
   model.position.set(-center.x, -box.min.y, -center.z)
   model.traverse((o) => {
-    if ((o as Mesh).isMesh) {
-      o.castShadow = !o.userData.noShadow
-      o.receiveShadow = true
-    }
+    const mesh = o as Mesh
+    if (!mesh.isMesh) return
+    mesh.castShadow = !o.userData.noShadow
+    mesh.receiveShadow = true
   })
   return { object: root, size: box.getSize(new Vector3()) }
 }
