@@ -3,6 +3,7 @@ import { countLocalRooms, importLocalRooms, localRooms, switchBackend, type Room
 import { useAuth, type Account } from '../store/authStore'
 import { useUi } from '../store/uiStore'
 import { cloudRooms } from './cloudRooms'
+import { syncMyItems } from './customItems'
 import { backendConfigured, hasStoredSession, supabase } from './supabase'
 
 const accountOf = (s: Session): Account => ({
@@ -27,6 +28,7 @@ export async function startingBackend(): Promise<{ backend: RoomBackend; scope: 
     watch(sb)
     if (!data.session) return undefined
     useAuth.setState({ account: accountOf(data.session) })
+    void syncMyItems().catch(() => {}) // your uploads, and live arrivals from your phone
     return { backend: cloudRooms(sb), scope: data.session.user.id }
   } catch (err) {
     console.warn('Could not restore your session', err)
@@ -52,6 +54,7 @@ async function onAuthChange(sb: SupabaseClient, event: AuthChangeEvent, session:
     useAuth.setState({ account: accountOf(session) })
     useUi.setState((s) => ({ authOpen: s.authOpen === 'reset' ? 'reset' : null }))
     await switchBackend(cloudRooms(sb), session.user.id)
+    void syncMyItems().catch(() => {})
     await offerImport(session.user.id)
   } else if (!session && current) {
     useAuth.setState({ account: null })

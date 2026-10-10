@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) v2.3 (share links + QR) v2.4 (living desk) and v2.5 (themed packs) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) v2.3 (share links + QR) v2.4 (living desk) v2.5 (themed packs) and v2.6 (your own scanned items) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -51,6 +51,12 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 - **Garage:** workbench, tool wall, toolbox, tyre, go-kart and a sports car.
 - **Pets:** cat, dog, bunny, parrot, chick, penguin plush, cat tree, pet bed, food bowls and an aquarium with swimming fish.
 - **Sim racing:** a racing cockpit (press **F** to sit in it if there's no desk chair) and triple monitors with live screens.
+
+**Your own items** (signed in)
+- Scan a real object with a free phone app (Polycam, Scaniverse, KIRI Engine), export **GLB** (under 25 MB).
+- Decorate → **My items** → **Add your own**: upload it, check the preview, set its real height and where it goes, and place it.
+- Or scan the QR in that panel to upload straight from your phone; it pops up on your computer instantly.
+- Rooms carry the items they use, so shared and exported rooms show them too.
 
 **Atmosphere (top-right)**
 - Five moods (sunny, sunset, rain, snow, night) blend smoothly into each other: light, sky, the view through the windows, and rain or snow falling around the room.

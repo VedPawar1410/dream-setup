@@ -117,7 +117,7 @@ function ShareSheet({ id, name, token }: { id: string; name: string; token: stri
  * light card (QR scanners need strong dark-on-light contrast). The library only does the
  * encoding, and it's loaded only when a QR is shown.
  */
-function QrCode({ url, name }: { url: string; name: string }) {
+export function QrCode({ url, name, caption = 'Scan with a phone camera to open the room.', download = true }: { url: string; name: string; caption?: string; download?: boolean }) {
   const canvas = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -175,7 +175,7 @@ function QrCode({ url, name }: { url: string; name: string }) {
     }
   }, [url])
 
-  const download = () => {
+  const save = () => {
     const a = document.createElement('a')
     a.href = canvas.current!.toDataURL('image/png')
     a.download = `${name.replace(/[^\w-]+/g, '-').toLowerCase() || 'room'}-qr.png`
@@ -186,10 +186,12 @@ function QrCode({ url, name }: { url: string; name: string }) {
     <div className="share-qr">
       <canvas ref={canvas} aria-label="QR code for the share link" />
       <div>
-        <p>Scan with a phone camera to open the room.</p>
-        <button className="pill-btn" onClick={download}>
-          Download QR
-        </button>
+        <p>{caption}</p>
+        {download && (
+          <button className="pill-btn" onClick={save}>
+            Download QR
+          </button>
+        )}
       </div>
     </div>
   )

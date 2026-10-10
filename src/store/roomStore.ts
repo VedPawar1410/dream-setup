@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { customDefOf, isCustomId, type CustomDef } from '../catalog/catalog'
 import { sizeOfItem } from '../catalog/models'
 import type { Weather } from '../scene/atmosphere'
 import type { ScreenMode } from '../scene/screens'
@@ -67,6 +68,8 @@ export type RoomDoc = {
   }
   items: PlacedItem[]
   atmosphere: { weather: Weather; rgbCycle: boolean }
+  /** Your own uploaded items used in this room, by catalog id: the room carries them, so it renders anywhere. */
+  custom?: Record<string, CustomDef>
 }
 
 export type Shell = RoomDoc['shell']
@@ -181,7 +184,13 @@ export const useRoom = create<RoomState>((set, get) => {
       setShell({ ...shell, openings: shell.openings.filter((o) => o.id !== id) }, `remove:${id}`)
     },
 
-    addItem: (item) => setItems([...get().doc.items, item], `add:${item.id}`),
+    addItem: (item) => {
+      // Placing one of your uploads copies its definition into the room
+      const doc = get().doc
+      const def = isCustomId(item.catalogId) && !doc.custom?.[item.catalogId] ? customDefOf(item.catalogId) : undefined
+      record(doc, `add:${item.id}`)
+      set({ doc: { ...doc, items: [...doc.items, item], ...(def && { custom: { ...doc.custom, [item.catalogId]: def } }) } })
+    },
 
     updateItem: (id, patch) => setItems(get().doc.items.map((it) => (it.id === id ? { ...it, ...patch } : it)), `item:${id}:${Object.keys(patch).join()}`),
 
