@@ -20,7 +20,8 @@ export function setMode(mode: Mode) {
   const ui = useUi.getState()
   // Mode switches move the camera or open panels: not during the intro, while seated,
   // or while framing a photo
-  if (ui.mode === mode || !intro.done || ui.firstPerson || ui.photo) return
+  // Someone else's shared room is view-only
+  if (ui.mode === mode || !intro.done || ui.firstPerson || ui.photo || ui.viewing) return
   if (ui.carry) cancelCarry()
   if (ui.carryItem) cancelItemCarry()
   useUi.setState({ mode, selectedId: null, selectedItemId: null })

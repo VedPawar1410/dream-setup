@@ -5,13 +5,17 @@ import App from './App.tsx'
 import { runSplash } from './anim/splash'
 import { initSound } from './audio/sound'
 import { startingBackend } from './backend/auth'
+import { bootShared, sharedTokenInUrl } from './backend/share'
 import { bootSaves } from './persistence/saves'
 
 runSplash()
 
 // Load your saved room before the first render, so the scene never flashes the default
 // Signed in on this browser? Then your account's rooms open; otherwise this browser's
-await bootSaves(await startingBackend())
+// A share link (?s=…) opens that room view-only instead, without touching your saves
+const shareToken = sharedTokenInUrl()
+if (shareToken) await bootShared(shareToken)
+else await bootSaves(await startingBackend())
 initSound()
 
 createRoot(document.getElementById('root')!).render(

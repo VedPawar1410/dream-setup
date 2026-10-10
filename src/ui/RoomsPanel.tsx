@@ -130,7 +130,7 @@ export default function RoomsPanel() {
 
         <div className="room-grid">
           {list.map((m) => (
-            <RoomCard key={m.id} meta={m} current={m.id === currentId} canDelete={list.length > 1} onError={setError} />
+            <RoomCard key={m.id} meta={m} current={m.id === currentId} canDelete={list.length > 1} canShare={where === 'cloud'} onError={setError} />
           ))}
         </div>
       </section>
@@ -138,7 +138,7 @@ export default function RoomsPanel() {
   )
 }
 
-function RoomCard({ meta, current, canDelete, onError }: { meta: SaveMeta; current: boolean; canDelete: boolean; onError: (msg: string) => void }) {
+function RoomCard({ meta, current, canDelete, canShare, onError }: { meta: SaveMeta; current: boolean; canDelete: boolean; canShare: boolean; onError: (msg: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const card = useRef<HTMLElement>(null)
@@ -163,6 +163,7 @@ function RoomCard({ meta, current, canDelete, onError }: { meta: SaveMeta; curre
       >
         {meta.thumbnail ? <img src={meta.thumbnail} alt="" /> : <span className="room-thumb-empty" />}
         {current && <span className="badge">Open</span>}
+        {meta.shareToken && <span className="badge shared">Shared</span>}
       </button>
       <div className="room-meta">
         {editing ? (
@@ -200,6 +201,11 @@ function RoomCard({ meta, current, canDelete, onError }: { meta: SaveMeta; curre
           </>
         ) : (
           <>
+            {canShare && (
+              <button className="mini-btn" onClick={() => useUi.setState({ shareOpen: meta.id })} title="Share a view-only link">
+                Share
+              </button>
+            )}
             <button className="mini-btn" onClick={() => setEditing(true)} title="Rename">
               Rename
             </button>

@@ -12,7 +12,16 @@ import { migrate, parseRoomFile, type RoomFile } from './migrate'
 // live in your account (Supabase). Both sit behind the same four-call interface, so
 // everything below works the same either way. Export/import still moves single rooms.
 
-export type SaveRecord = { id: string; name: string; doc: RoomDoc; thumbnail: string | null; createdAt: number; updatedAt: number }
+export type SaveRecord = {
+  id: string
+  name: string
+  doc: RoomDoc
+  thumbnail: string | null
+  createdAt: number
+  updatedAt: number
+  /** Account rooms only: set while the room has a view-only share link. */
+  shareToken?: string | null
+}
 export type SaveMeta = Omit<SaveRecord, 'doc'>
 
 /** A place rooms are kept. */
@@ -81,11 +90,20 @@ const writeCurrent = (id: string) => {
 }
 
 export const metaOf = ({ doc: _doc, ...meta }: SaveRecord): SaveMeta => meta
-const newRecord = (name: string, doc: RoomDoc): SaveRecord => {
+export const newRecord = (name: string, doc: RoomDoc): SaveRecord => {
   const now = Date.now()
   return { id: crypto.randomUUID(), name, doc, thumbnail: null, createdAt: now, updatedAt: now }
 }
-const upsertMeta = (meta: SaveMeta) =>
+/** Make `id` the room that opens next time for this scope ('local' or a user id). */
+export function rememberCurrent(forScope: string, id: string) {
+  try {
+    localStorage.setItem(forScope === 'local' ? 'dream-setup:current' : `dream-setup:current:${forScope}`, id)
+  } catch {
+    // Storage blocked: the newest room opens instead
+  }
+}
+
+export const upsertMeta = (meta: SaveMeta) =>
   useSaves.setState((s) => ({ list: [meta, ...s.list.filter((m) => m.id !== meta.id)] }))
 
 // ---------- Thumbnails ----------
@@ -194,6 +212,7 @@ async function saveNow(forceThumb = false) {
       thumbnail: fresh ?? prev?.thumbnail ?? null,
       createdAt: prev?.createdAt ?? now,
       updatedAt: now,
+      shareToken: prev?.shareToken,
     }
     await backend.put(rec)
     upsertMeta(metaOf(rec))
