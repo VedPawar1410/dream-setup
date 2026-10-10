@@ -1,11 +1,13 @@
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import { BufferAttribute, BufferGeometry, ShaderMaterial } from 'three'
+import { tickMusic } from '../audio/music'
 import { setAmbience } from '../audio/sound'
 import { useRoom } from '../store/roomStore'
 import { atmo, setAtmosphere } from './atmosphere'
 import { THICKNESS } from './dimensions'
 import { rgbMaterials } from './sceneRefs'
+import { tickScreens } from './screens'
 import { syncViewUniforms, viewUniforms } from './windowView'
 
 /** Glue between the stored weather and the live scene, plus the effects that run every frame. */
@@ -24,6 +26,9 @@ export default function Weather() {
     syncViewUniforms(t)
     // The rain and wind you hear follow the same blend as the rain you see
     setAmbience(atmo.rain, atmo.snow)
+    // Music first (screens and lights read its levels), then the live screens
+    tickMusic()
+    tickScreens(t)
     if (rgbCycle) {
       // Sweep every RGB part through the rainbow, each a little ahead of the last
       let i = 0

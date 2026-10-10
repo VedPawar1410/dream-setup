@@ -3,7 +3,8 @@ import { gsap, useGSAP } from '../anim/gsap'
 import { catalogById } from '../catalog/catalog'
 import { loadPrototype } from '../catalog/models'
 import { slotsOf } from '../scene/colors'
-import { resetItemColors, resizeItem, setItemColor, setPaintTarget } from '../scene/decorateActions'
+import { resetItemColors, resizeItem, setItemColor, setItemScreen, setPaintTarget } from '../scene/decorateActions'
+import { SCREEN_MODES } from '../scene/screens'
 import { FLOOR_MATERIALS, FLOOR_SWATCHES, floorPreview, WALL_PATTERNS, WALL_SWATCHES, wallPreview } from '../scene/surfaces'
 import { SCALE_MAX, SCALE_MIN, type Scale } from '../store/itemRules'
 import { useRoom, type WallSide } from '../store/roomStore'
@@ -57,6 +58,18 @@ function ItemColors({ id }: { id: string }) {
   return (
     <>
       <ItemSize id={id} catalogId={entry.id} name={entry.name} size={item.size} />
+      {entry.screen && (
+        <section className="panel-section">
+          <h2>Screen</h2>
+          <div className="chips screen-modes">
+            {SCREEN_MODES.map((m) => (
+              <button key={m.id} className={`chip${(item.screen ?? 'wallpaper') === m.id ? ' active' : ''}`} data-sound="toggle" onClick={() => setItemScreen(id, m.id)}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
       <ItemColorSlots id={id} catalogId={entry.id} colors={item.colors} />
     </>
   )

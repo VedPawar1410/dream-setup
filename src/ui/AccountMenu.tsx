@@ -14,6 +14,7 @@ export function AccountMenu() {
 
   useGSAP(
     () => {
+      if (!root.current) return // guests have no menu to animate
       gsap.to('.account-pop', { autoAlpha: open ? 1 : 0, y: open ? 0 : -6, duration: open ? 0.3 : 0.15, ease: open ? 'back.out(1.8)' : 'power2.in', overwrite: true })
     },
     { dependencies: [open], scope: root },

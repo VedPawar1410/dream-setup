@@ -1,4 +1,5 @@
-import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3, type Material, type Object3D } from 'three'
+import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, PlaneGeometry, Vector3, type Material, type Object3D } from 'three'
+import { screenTexture } from '../scene/screens'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { scaled, type Size } from '../store/itemRules'
 import type { PlacedItem } from '../store/roomStore'
@@ -44,12 +45,28 @@ export function loadPrototype(item: CatalogItem): Promise<Prototype> {
         return normalize(new Mesh(new BoxGeometry(0.3, 0.3, 0.3), new MeshStandardMaterial({ color: '#ff6b81' })), 1, 0)
       })
       .then((proto) => {
+        if (item.screen?.rect) addScreen(proto, item.screen.aspect, item.screen.rect)
         itemSizes.set(item.id, proto.size)
         return proto
       })
     prototypes.set(item.id, p)
   }
   return p
+}
+
+/**
+ * Kenney's monitors and TVs paint the screen as part of the dark body, so a live screen
+ * is a thin glowing plane laid over the front, placed by fractions of the model's size.
+ */
+function addScreen(proto: Prototype, aspect: number, r: { w: number; h: number; y: number; z: number }) {
+  const { size } = proto
+  const screen = new Mesh(
+    new PlaneGeometry(r.w * size.x, r.h * size.y),
+    new MeshStandardMaterial({ name: 'screen', color: '#000000', emissive: '#ffffff', emissiveMap: screenTexture('wallpaper', aspect), emissiveIntensity: 0.85, roughness: 0.25 }),
+  )
+  screen.position.set(0, r.y * size.y, (r.z - 0.5) * size.z + size.z / 2 + 0.002)
+  screen.castShadow = false
+  proto.object.add(screen)
 }
 
 function normalize(model: Object3D, scale: number, yaw: number): Prototype {

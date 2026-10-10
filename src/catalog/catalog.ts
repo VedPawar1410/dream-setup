@@ -16,6 +16,15 @@ export type CatalogItem = {
   light?: { y: number; intensity: number; distance: number }
   /** Electronics whose glowing parts switch off with the power. */
   glows?: boolean
+  /**
+   * Has a live screen. `rect` adds one to models without a separate screen part:
+   * width, height, centre height and front depth as fractions of the model's size.
+   */
+  screen?: { aspect: number; rect?: { w: number; h: number; y: number; z: number } }
+  /** The whole model spins (radians/s) while switched on: ceiling fans. */
+  spin?: number
+  /** Clicking it in view mode plays or pauses the lo-fi player. */
+  music?: boolean
   model: { kind: 'glb'; file: string; scale: number; yaw: number } | { kind: 'procedural'; build: ProceduralId }
 }
 
@@ -33,14 +42,15 @@ export const CATEGORIES: { id: Category; label: string }[] = [
 // Kenney's furniture is modelled at roughly half scale: ×1.9 puts a desk top at a real 73 cm.
 const K = 1.9
 
-type Opts = Pick<CatalogItem, 'surface' | 'flat' | 'light' | 'glows'> & { scale?: number; yaw?: number }
+type Opts = Pick<CatalogItem, 'surface' | 'flat' | 'light' | 'glows' | 'screen' | 'spin' | 'music'> & { scale?: number; yaw?: number }
 
 function kenney(id: string, name: string, category: Category, mount: Mount, o: Opts = {}): CatalogItem {
-  return { id, name, category, mount, surface: o.surface, flat: o.flat, light: o.light, glows: o.glows, model: { kind: 'glb', file: `kenney/${id}.glb`, scale: o.scale ?? K, yaw: o.yaw ?? 0 } }
+  const { scale, yaw, ...rest } = o
+  return { id, name, category, mount, ...rest, model: { kind: 'glb', file: `kenney/${id}.glb`, scale: scale ?? K, yaw: yaw ?? 0 } }
 }
 
 function made(id: ProceduralId, name: string, category: Category, mount: Mount, o: Opts = {}): CatalogItem {
-  return { id, name, category, mount, surface: o.surface, flat: o.flat, light: o.light, glows: o.glows, model: { kind: 'procedural', build: id } }
+  return { id, name, category, mount, ...o, model: { kind: 'procedural', build: id } }
 }
 
 const top = { surface: true }
@@ -52,8 +62,8 @@ export const CATALOG: CatalogItem[] = [
   // Desk & tech
   kenney('desk', 'Desk', 'desk', 'floor', top),
   kenney('deskCorner', 'Corner Desk', 'desk', 'floor', top),
-  made('monitorWide', 'Ultrawide Monitor', 'desk', 'surface', glows),
-  kenney('computerScreen', 'Monitor', 'desk', 'surface'),
+  made('monitorWide', 'Ultrawide Monitor', 'desk', 'surface', { glows: true, screen: { aspect: 2.4 } }),
+  kenney('computerScreen', 'Monitor', 'desk', 'surface', { glows: true, screen: { aspect: 16 / 9, rect: { w: 0.88, h: 0.56, y: 0.7, z: 0.5 } } }),
   kenney('computerKeyboard', 'Keyboard', 'desk', 'surface'),
   kenney('computerMouse', 'Mouse', 'desk', 'surface'),
   made('pcTower', 'Gaming PC', 'desk', 'surface', glows),
@@ -61,8 +71,8 @@ export const CATALOG: CatalogItem[] = [
   kenney('laptop', 'Laptop', 'desk', 'surface'),
   kenney('speakerSmall', 'Desk Speaker', 'desk', 'surface'),
   kenney('speaker', 'Tower Speaker', 'desk', 'floor'),
-  kenney('radio', 'Radio', 'desk', 'surface'),
-  kenney('televisionModern', 'TV', 'desk', 'surface'),
+  kenney('radio', 'Radio', 'desk', 'surface', { music: true }),
+  kenney('televisionModern', 'TV', 'desk', 'surface', { glows: true, screen: { aspect: 16 / 9, rect: { w: 0.9, h: 0.7, y: 0.6, z: 0.5 } } }),
   kenney('televisionVintage', 'Retro TV', 'desk', 'surface'),
 
   // Seating
@@ -121,7 +131,7 @@ export const CATALOG: CatalogItem[] = [
   kenney('lampWall', 'Wall Lamp', 'lighting', 'wall', { light: { y: 0.5, intensity: 1.6, distance: 3 } }),
   made('ledStrip', 'LED Strip', 'lighting', 'wall', glows),
   kenney('lampSquareCeiling', 'Ceiling Light', 'lighting', 'ceiling', { light: { y: 0, intensity: 3.5, distance: 6 } }),
-  kenney('ceilingFan', 'Ceiling Fan', 'lighting', 'ceiling', { scale: 2.4, light: { y: 0, intensity: 2.5, distance: 5 } }),
+  kenney('ceilingFan', 'Ceiling Fan', 'lighting', 'ceiling', { scale: 2.4, light: { y: 0, intensity: 2.5, distance: 5 }, spin: 2.6 }),
 
   // Decor
   kenney('rugRectangle', 'Rug', 'decor', 'floor', { flat: true, scale: 1.3 }),

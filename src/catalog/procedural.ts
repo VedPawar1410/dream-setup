@@ -34,11 +34,29 @@ function box(parent: Group, w: number, h: number, d: number, material: MeshStand
   return m
 }
 
+const blade = mat('blade', { color: '#9d8fc4', roughness: 0.4, transparent: true, opacity: 0.6 })
+
+/**
+ * A glowing fan ring with three blades inside. The blades are their own group tagged
+ * `spin`, so the scene can turn them while the PC is on (a lone ring looks the same at
+ * every angle, so it can't show motion).
+ */
 function ring(parent: Group, radius: number, material: MeshStandardMaterial, x: number, y: number, z: number, faceX = false) {
-  const m = new Mesh(new TorusGeometry(radius, radius * 0.11, 8, 36), material)
-  m.position.set(x, y, z)
-  if (faceX) m.rotation.y = Math.PI / 2
-  parent.add(m)
+  const fan = new Group()
+  fan.position.set(x, y, z)
+  if (faceX) fan.rotation.y = Math.PI / 2
+  fan.add(new Mesh(new TorusGeometry(radius, radius * 0.11, 8, 36), material))
+  const rotor = new Group()
+  rotor.userData.spin = 22 // radians per second at full power
+  for (let i = 0; i < 3; i++) {
+    const b = new Mesh(new BoxGeometry(radius * 0.32, radius * 0.86, 0.003), blade)
+    b.geometry.translate(0, radius * 0.45, 0)
+    b.rotation.z = (i * Math.PI * 2) / 3
+    b.rotation.y = 0.35 // pitched, like real fan blades
+    rotor.add(b)
+  }
+  fan.add(rotor)
+  parent.add(fan)
 }
 
 const textures = new Map<string, CanvasTexture>()
@@ -88,28 +106,31 @@ function pcTower() {
 }
 
 function wallpaper() {
-  return painted('wallpaper', 512, 214, (ctx, w, h) => {
-    const sky = ctx.createLinearGradient(0, 0, 0, h)
-    sky.addColorStop(0, '#2b1d4f')
-    sky.addColorStop(0.55, '#c05a8a')
-    sky.addColorStop(1, '#f2a65a')
-    ctx.fillStyle = sky
-    ctx.fillRect(0, 0, w, h)
-    ctx.fillStyle = '#ffe3a8'
+  return painted('wallpaper', 512, 214, paintWallpaper)
+}
+
+/** The default sunset wallpaper (also one of the live screen modes). */
+export function paintWallpaper(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const sky = ctx.createLinearGradient(0, 0, 0, h)
+  sky.addColorStop(0, '#2b1d4f')
+  sky.addColorStop(0.55, '#c05a8a')
+  sky.addColorStop(1, '#f2a65a')
+  ctx.fillStyle = sky
+  ctx.fillRect(0, 0, w, h)
+  ctx.fillStyle = '#ffe3a8'
+  ctx.beginPath()
+  ctx.arc(w * 0.62, h * 0.62, 34, 0, Math.PI * 2)
+  ctx.fill()
+  const hills = (base: number, amp: number, color: string) => {
+    ctx.fillStyle = color
     ctx.beginPath()
-    ctx.arc(w * 0.62, h * 0.62, 34, 0, Math.PI * 2)
+    ctx.moveTo(0, h)
+    for (let x = 0; x <= w; x += 8) ctx.lineTo(x, base + Math.sin(x / 47 + base) * amp + Math.sin(x / 13) * amp * 0.25)
+    ctx.lineTo(w, h)
     ctx.fill()
-    const hills = (base: number, amp: number, color: string) => {
-      ctx.fillStyle = color
-      ctx.beginPath()
-      ctx.moveTo(0, h)
-      for (let x = 0; x <= w; x += 8) ctx.lineTo(x, base + Math.sin(x / 47 + base) * amp + Math.sin(x / 13) * amp * 0.25)
-      ctx.lineTo(w, h)
-      ctx.fill()
-    }
-    hills(h * 0.72, 12, '#5b2f63')
-    hills(h * 0.85, 9, '#2c1a3d')
-  })
+  }
+  hills(h * 0.72, 12, '#5b2f63')
+  hills(h * 0.85, 9, '#2c1a3d')
 }
 
 function monitorWide() {

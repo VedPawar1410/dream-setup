@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { sizeOfItem } from '../catalog/models'
 import type { Weather } from '../scene/atmosphere'
+import type { ScreenMode } from '../scene/screens'
 import type { FloorMaterial, WallPattern } from '../scene/surfaces'
 import { itemMinRoom, openingHitsWallItems, type Scale } from './itemRules'
 import { record } from './history'
@@ -47,6 +48,8 @@ export type PlacedItem = {
   on?: boolean
   /** Resized: multipliers on the model's width/depth/height. Missing means original size. */
   size?: Scale
+  /** What a monitor or TV shows (wallpaper by default). */
+  screen?: ScreenMode
 }
 
 export type WallFinish = { pattern: WallPattern; color: string }

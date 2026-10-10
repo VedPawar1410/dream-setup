@@ -6,6 +6,7 @@ import { halfExtents, SCALE_MAX, SCALE_MIN, type Scale } from '../store/itemRule
 import { useRoom, type PlacedItem, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { setCameraLocked } from './camera'
+import type { ScreenMode } from './screens'
 import { candidateFields, candidateOf, isValid, placement, subtree, worldYaw } from './placementSolver'
 import { itemAnims, itemObjects } from './sceneRefs'
 
@@ -199,6 +200,10 @@ export function nudgeSelectedSize(dir: 1 | -1) {
 export function setItemColor(id: string, slot: string, hex: string) {
   const item = findItem(id)
   if (item) useRoom.getState().updateItem(id, { colors: { ...item.colors, [slot]: hex } })
+}
+
+export function setItemScreen(id: string, screen: ScreenMode) {
+  useRoom.getState().updateItem(id, { screen: screen === 'wallpaper' ? undefined : screen })
 }
 
 export function resetItemColors(id: string) {

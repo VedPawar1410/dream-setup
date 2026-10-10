@@ -2261,3 +2261,196 @@ kbd {
     text-align: center;
   }
 }
+
+/* ---------- v2.4: music player, screens ---------- */
+
+.music {
+  position: relative;
+}
+
+.music-pop {
+  position: absolute;
+  right: 0;
+  bottom: 56px;
+  width: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgb(23 18 31 / 0.88);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.4);
+  pointer-events: auto;
+  transform-origin: bottom right;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.music-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* A record: grooves from a repeating gradient, a coloured label in the middle */
+.vinyl {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 30%, rgb(255 255 255 / 0.05) 31% 32%, transparent 33%),
+    repeating-radial-gradient(circle, #19151f 0 2px, #231e2c 2px 3px);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.5);
+}
+
+.vinyl span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: conic-gradient(#b18cff, #ff8fb1, #ffd27a, #b18cff);
+  box-shadow: inset 0 0 0 9px transparent;
+  position: relative;
+}
+
+.vinyl span::after {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: #17121f;
+}
+
+.track-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.track-info strong {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-info span {
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+.music-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+
+.round-btn {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform 0.3s var(--ease-out),
+    background 0.2s;
+}
+
+.round-btn:hover {
+  background: rgb(255 255 255 / 0.13);
+  transform: scale(1.06);
+}
+
+.round-btn:active {
+  transform: scale(0.94);
+}
+
+.round-btn.big {
+  width: 50px;
+  height: 50px;
+  border-color: rgb(177 140 255 / 0.6);
+  background: rgb(177 140 255 / 0.25);
+}
+
+.round-btn svg,
+.music-volume svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.round-btn.big svg {
+  fill: currentColor;
+}
+
+.music-volume {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-dim);
+}
+
+.music-volume input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+/* The dock button while music plays: three bouncing equaliser bars */
+.eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 16px;
+}
+
+.eq i {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: eq 0.9s ease-in-out infinite;
+}
+
+.eq i:nth-child(2) {
+  animation-delay: -0.3s;
+}
+
+.eq i:nth-child(3) {
+  animation-delay: -0.6s;
+}
+
+@keyframes eq {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq i {
+    animation: none;
+  }
+}
+
+.screen-modes {
+  flex-wrap: wrap;
+  overflow: visible;
+}

@@ -1,5 +1,6 @@
 import { CATALOG } from '../catalog/catalog'
 import type { Weather } from '../scene/atmosphere'
+import { SCREEN_MODES } from '../scene/screens'
 import { FLOOR_MATERIALS, WALL_PATTERNS } from '../scene/surfaces'
 import { defaultRoom, type FloorFinish, type Opening, type PlacedItem, type RoomDoc, type WallFinish, type WallSide } from '../store/roomStore'
 import { SCALE_MAX, SCALE_MIN } from '../store/itemRules'
@@ -14,6 +15,7 @@ const WEATHERS: Weather[] = ['sunny', 'sunset', 'rain', 'snow', 'night']
 const PATTERNS = new Set<string>(WALL_PATTERNS.map((p) => p.id))
 const FLOORS = new Set<string>(FLOOR_MATERIALS.map((m) => m.id))
 const CATALOG_IDS = new Set(CATALOG.map((c) => c.id))
+const SCREENS = new Set<string>(SCREEN_MODES.map((m) => m.id))
 
 type Obj = Record<string, unknown>
 const isObj = (v: unknown): v is Obj => !!v && typeof v === 'object' && !Array.isArray(v)
@@ -60,6 +62,7 @@ function item(v: unknown): PlacedItem | null {
     if (Object.keys(colors).length) out.colors = colors
   }
   if (v.on === false) out.on = false
+  if (typeof v.screen === 'string' && SCREENS.has(v.screen) && v.screen !== 'wallpaper') out.screen = v.screen as PlacedItem['screen']
   // Resized items: each multiplier clamped to the allowed range; nonsense is dropped
   if (isObj(v.size) && [v.size.w, v.size.d, v.size.h].every(isNum)) {
     const k = v.size as { w: number; d: number; h: number }

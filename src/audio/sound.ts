@@ -33,6 +33,13 @@ const VOLUME: Record<Clip, number> = {
 }
 
 let ctx: AudioContext | null = null
+let keepAwake = false
+
+/** The live graph, once audio is unlocked (null before the first click or key). */
+export const audioGraph = () => (ctx ? { ctx, master } : null)
+
+/** Music playing: keep audio running when the tab is hidden. */
+export const setKeepAwake = (on: boolean) => void (keepAwake = on)
 let master: GainNode
 let white: AudioBuffer
 let rainGain: GainNode
@@ -78,8 +85,8 @@ function start() {
 
   // Muting fades rather than cuts, so the rain doesn't stop with a click
   useSettings.subscribe((s) => master.gain.setTargetAtTime(s.sound ? 1 : 0, ctx!.currentTime, 0.05))
-  // A background tab shouldn't keep raining at you
-  document.addEventListener('visibilitychange', () => void (document.hidden ? ctx?.suspend() : ctx?.resume()))
+  // A background tab shouldn't keep raining at you, but music you put on keeps playing
+  document.addEventListener('visibilitychange', () => void (document.hidden && !keepAwake ? ctx?.suspend() : ctx?.resume()))
 
   for (const [name, bytes] of raw) {
     bytes

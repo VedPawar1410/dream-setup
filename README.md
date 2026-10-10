@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) and v2.3 (share links + QR) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 complete; v2.1 (editing upgrades) v2.2 (accounts, cloud saves, installable app) v2.3 (share links + QR) and v2.4 (living desk) done. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -40,6 +40,11 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 - Select an item to **resize** it (width, depth, height in cm; drag a label or type; unlock to stretch one side) and to recolour each of its parts (wood, fabric, metal, RGB lighting…). Things on top ride along; growing against a wall nudges it into the room.
 - With nothing selected, the Room panel styles the **walls** (paint, stripes, floral, brick, panels, tiles) and the **floor** (planks, parquet, tiles, carpet, concrete) in any colour.
 - Paint all walls at once, pick one with N/E/S/W, or just click a wall in the room.
+
+**Living desk**
+- Monitors and TVs are live: pick **Wallpaper, Clock, Code or Visualiser** per screen in the Inspector.
+- PC fans and ceiling fans spin while switched on.
+- **Lo-fi player** (music note, bottom-right): five CC0 tracks, play/skip/volume, a spinning record. Click a radio in your room to play or pause. RGB lights pulse with the bass, and the visualiser screen dances along.
 
 **Atmosphere (top-right)**
 - Five moods (sunny, sunset, rain, snow, night) blend smoothly into each other: light, sky, the view through the windows, and rain or snow falling around the room.
