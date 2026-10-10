@@ -4,7 +4,7 @@ A cozy browser sandbox for designing your dream room and desk setup, inspired by
 [My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** All 8 phases complete (v1). See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 complete; v2.1 (undo/redo, resizable items) in progress. See the v2 roadmap in PLAN.md. See [PLAN.md](PLAN.md). Model and sound credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
 
 ## Controls
@@ -31,11 +31,13 @@ Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 | Click an item | Select it |
 | Drag an item | Move it, along with everything sitting on it |
 | Cmd/Ctrl + D | Duplicate the selected item |
+| [ / ] | Shrink / grow the selected item by 10% |
+| Cmd/Ctrl + Z, Shift + Cmd/Ctrl + Z | Undo / redo (also the arrow buttons in the dock) |
 | Delete / Backspace | Remove the selected item (and what's on it) |
 | Esc | Cancel placing → deselect → back to view mode |
 
 **Customising (decorate mode, right panel)**
-- Select an item to recolour each of its parts (wood, fabric, metal, RGB lighting…), or reset it.
+- Select an item to **resize** it (width, depth, height in cm; drag a label or type; unlock to stretch one side) and to recolour each of its parts (wood, fabric, metal, RGB lighting…). Things on top ride along; growing against a wall nudges it into the room.
 - With nothing selected, the Room panel styles the **walls** (paint, stripes, floral, brick, panels, tiles) and the **floor** (planks, parquet, tiles, carpet, concrete) in any colour.
 - Paint all walls at once, pick one with N/E/S/W, or just click a wall in the room.
 

@@ -1824,3 +1824,129 @@ kbd {
     animation: none;
   }
 }
+
+/* ---------- v2.1: undo/redo, size controls ---------- */
+
+.history-buttons {
+  display: flex;
+  gap: 8px;
+  margin-right: 8px;
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
+}
+
+.size-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dim-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-dim);
+}
+
+.lock-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: none;
+  color: var(--ink-dim);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+
+.lock-btn.on {
+  color: var(--ink);
+  border-color: rgb(177 140 255 / 0.5);
+  background: rgb(177 140 255 / 0.16);
+}
+
+.lock-btn svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.size-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.size-field {
+  display: grid;
+  grid-template-columns: 1fr 72px auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.05);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Drag me sideways: the cursor says so */
+.scrub {
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: none;
+  color: var(--ink-dim);
+  transition: color 0.2s;
+}
+
+.scrub:hover {
+  color: var(--accent);
+}
+
+.size-field input {
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: rgb(0 0 0 / 0.2);
+  color: var(--ink);
+  font: inherit;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+
+.size-field input::-webkit-inner-spin-button,
+.size-field input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.size-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.unit {
+  color: var(--ink-dim);
+  font-size: 12px;
+}
+
+.inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Filter } from '../scene/photo'
+import type { Scale } from './itemRules'
 import type { Opening, WallSide } from './roomStore'
 
 // Transient editor state, kept apart from the RoomDoc on purpose: it's never saved,
@@ -18,7 +19,7 @@ export type Ghost = { wall: WallSide; offset: number; valid: boolean }
  * `rot` is its yaw in room space. Where it would land is solved every frame and lives
  * outside React (see scene/placementSolver.ts), so moving the mouse never re-renders.
  */
-export type CarryItem = { catalogId: string; itemId: string | null; rot: number; colors?: Record<string, string> }
+export type CarryItem = { catalogId: string; itemId: string | null; rot: number; colors?: Record<string, string>; size?: Scale }
 
 type UiState = {
   mode: Mode

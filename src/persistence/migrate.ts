@@ -2,6 +2,7 @@ import { CATALOG } from '../catalog/catalog'
 import type { Weather } from '../scene/atmosphere'
 import { FLOOR_MATERIALS, WALL_PATTERNS } from '../scene/surfaces'
 import { defaultRoom, type FloorFinish, type Opening, type PlacedItem, type RoomDoc, type WallFinish, type WallSide } from '../store/roomStore'
+import { SCALE_MAX, SCALE_MIN } from '../store/itemRules'
 import { ROOM } from '../store/rules'
 
 // Everything that loads a room goes through here: saves from IndexedDB, imported files,
@@ -59,6 +60,11 @@ function item(v: unknown): PlacedItem | null {
     if (Object.keys(colors).length) out.colors = colors
   }
   if (v.on === false) out.on = false
+  // Resized items: each multiplier clamped to the allowed range; nonsense is dropped
+  if (isObj(v.size) && [v.size.w, v.size.d, v.size.h].every(isNum)) {
+    const k = v.size as { w: number; d: number; h: number }
+    out.size = { w: clamp(k.w, SCALE_MIN, SCALE_MAX), d: clamp(k.d, SCALE_MIN, SCALE_MAX), h: clamp(k.h, SCALE_MIN, SCALE_MAX) }
+  }
   return out
 }
 

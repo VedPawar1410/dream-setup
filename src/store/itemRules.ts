@@ -4,7 +4,17 @@ import type { Opening, PlacedItem } from './roomStore'
 // No three.js or React here, so it's easy to reason about and to test.
 
 export type Size = { x: number; y: number; z: number }
-export type SizeOf = (catalogId: string) => Size | undefined
+
+/** A placed item's resize: multipliers on the model's own width (x), depth (z) and height (y). */
+export type Scale = { w: number; d: number; h: number }
+export const SCALE_MIN = 0.4
+export const SCALE_MAX = 3
+
+/** The model's size stretched by an item's scale (or as-is when it has none). */
+export const scaled = (s: Size, k?: Scale): Size => (k ? { x: s.x * k.w, y: s.y * k.h, z: s.z * k.d } : s)
+
+/** Real size of a placed item, or undefined while its model is still loading. */
+export type SizeOf = (item: Pick<PlacedItem, 'catalogId' | 'size'>) => Size | undefined
 
 /** An item's floor footprint: centre, half width/depth, and yaw (radians). */
 export type Rect = { x: number; z: number; hw: number; hd: number; rot: number }
@@ -50,7 +60,7 @@ export function itemMinRoom(items: PlacedItem[], sizeOf: SizeOf) {
   let depth = 0
   let height = 0
   for (const it of items) {
-    const s = it.parentId ? undefined : sizeOf(it.catalogId)
+    const s = it.parentId ? undefined : sizeOf(it)
     if (!s) continue
     if (it.wall) {
       const need = 2 * (Math.abs(it.wall.along) + s.x / 2)
@@ -70,7 +80,7 @@ export function itemMinRoom(items: PlacedItem[], sizeOf: SizeOf) {
 /** Would this window/door cut through something hanging on its wall? */
 export function openingHitsWallItems(o: Opening, items: PlacedItem[], sizeOf: SizeOf) {
   return items.some((it) => {
-    const s = it.wall?.side === o.wall && !it.parentId ? sizeOf(it.catalogId) : undefined
+    const s = it.wall?.side === o.wall && !it.parentId ? sizeOf(it) : undefined
     return (
       !!s &&
       spansOverlap(o.offset - o.width / 2, o.offset + o.width / 2, it.wall!.along - s.x / 2, it.wall!.along + s.x / 2) &&

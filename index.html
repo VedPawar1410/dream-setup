@@ -51,6 +51,19 @@
         transform: scaleX(0);
         animation: none;
       }
+      /* Hidden until the JS can measure real progress */
+      .splash-pct {
+        margin-top: -6px;
+        font-size: 13px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: #a99bbd;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .determinate .splash-pct {
+        opacity: 1;
+      }
       @keyframes splash-sweep {
         from { transform: translateX(-100%); }
         to { transform: translateX(290%); }
@@ -62,6 +75,7 @@
       <div class="splash-inner">
         <div class="splash-title">Dream Setup</div>
         <div class="splash-bar"><i></i></div>
+        <div class="splash-pct">0%</div>
       </div>
     </div>
     <div id="root"></div>

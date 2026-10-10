@@ -3,8 +3,9 @@ import { gsap, useGSAP } from '../anim/gsap'
 import { catalogById } from '../catalog/catalog'
 import { loadPrototype } from '../catalog/models'
 import { slotsOf } from '../scene/colors'
-import { resetItemColors, setItemColor, setPaintTarget } from '../scene/decorateActions'
+import { resetItemColors, resizeItem, setItemColor, setPaintTarget } from '../scene/decorateActions'
 import { FLOOR_MATERIALS, FLOOR_SWATCHES, floorPreview, WALL_PATTERNS, WALL_SWATCHES, wallPreview } from '../scene/surfaces'
+import { SCALE_MAX, SCALE_MIN, type Scale } from '../store/itemRules'
 import { useRoom, type WallSide } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import ColorPicker from './ColorPicker'
@@ -53,17 +54,134 @@ function ItemColors({ id }: { id: string }) {
   const item = useRoom((s) => s.doc.items.find((it) => it.id === id))
   const entry = item ? catalogById.get(item.catalogId) : undefined
   if (!item || !entry) return null
-  return <ItemColorSlots id={id} catalogId={entry.id} name={entry.name} colors={item.colors} />
+  return (
+    <>
+      <ItemSize id={id} catalogId={entry.id} name={entry.name} size={item.size} />
+      <ItemColorSlots id={id} catalogId={entry.id} colors={item.colors} />
+    </>
+  )
 }
 
-function ItemColorSlots({ id, catalogId, name, colors }: { id: string; catalogId: string; name: string; colors?: Record<string, string> }) {
+const ONE: Scale = { w: 1, d: 1, h: 1 }
+const AXES = [
+  { key: 'w', label: 'Width', dim: 'x' },
+  { key: 'd', label: 'Depth', dim: 'z' },
+  { key: 'h', label: 'Height', dim: 'y' },
+] as const
+
+/** Width, depth and height in centimetres. Locked, all three change together. */
+function ItemSize({ id, catalogId, name, size }: { id: string; catalogId: string; name: string; size?: Scale }) {
+  const base = use(loadPrototype(catalogById.get(catalogId)!)).size
+  const [locked, setLocked] = useState(true)
+  const k = size ?? ONE
+
+  const change = (axis: keyof Scale, cm: number, baseM: number) => {
+    const ratio = cm / 100 / baseM
+    if (!(ratio > 0)) return
+    if (locked) {
+      const f = ratio / k[axis]
+      resizeItem(id, { w: k.w * f, d: k.d * f, h: k.h * f })
+    } else resizeItem(id, { ...k, [axis]: ratio })
+  }
+
+  return (
+    <section className="panel-section">
+      <h2>{name}</h2>
+      <div className="size-head">
+        <span className="dim-title">Size</span>
+        <button className={`lock-btn${locked ? ' on' : ''}`} onClick={() => setLocked(!locked)} aria-pressed={locked} title={locked ? 'Proportions locked' : 'Proportions unlocked'}>
+          <svg viewBox="0 0 24 24">{locked ? <path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" /> : <path d="M7 11V8a5 5 0 0 1 9.6-2M5 11h14v10H5z" />}</svg>
+          {locked ? 'Locked' : 'Free'}
+        </button>
+      </div>
+      <div className="size-fields">
+        {AXES.map((a) => {
+          const baseM = base[a.dim]
+          return (
+            <ScrubField
+              key={a.key}
+              label={a.label}
+              value={Math.round(baseM * k[a.key] * 100)}
+              min={Math.ceil(baseM * SCALE_MIN * 100)}
+              max={Math.floor(baseM * SCALE_MAX * 100)}
+              onChange={(cm) => change(a.key, cm, baseM)}
+            />
+          )
+        })}
+      </div>
+      {size ? (
+        <button className="ghost-btn" onClick={() => resizeItem(id, ONE)}>
+          Reset to original size
+        </button>
+      ) : (
+        <p className="panel-note">Drag a label or type a size. Unlock to stretch one side (details stretch too).</p>
+      )}
+    </section>
+  )
+}
+
+/**
+ * A number field whose label you can drag sideways to scrub the value, like in design
+ * tools. Typing commits on Enter or when you leave the field.
+ */
+function ScrubField({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const clampCm = (v: number) => Math.min(max, Math.max(min, Math.round(v)))
+
+  const startScrub = (e: React.PointerEvent<HTMLSpanElement>) => {
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    const x0 = e.clientX
+    const v0 = value
+    let last = v0
+    const move = (ev: PointerEvent) => {
+      const next = clampCm(v0 + (ev.clientX - x0) * 0.5) // half a centimetre per pixel
+      if (next !== last) onChange((last = next))
+    }
+    const up = () => {
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerup', up)
+    }
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerup', up)
+  }
+
+  const commit = () => {
+    if (draft !== null && draft.trim() !== '') onChange(clampCm(Number(draft)))
+    setDraft(null)
+  }
+
+  return (
+    <label className="size-field">
+      <span className="scrub" onPointerDown={startScrub}>
+        {label}
+      </span>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        value={draft ?? value}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          e.stopPropagation() // typing digits mustn't trigger scene shortcuts
+          if (e.key === 'Enter') e.currentTarget.blur()
+        }}
+      />
+      <span className="unit">cm</span>
+    </label>
+  )
+}
+
+function ItemColorSlots({ id, catalogId, colors }: { id: string; catalogId: string; colors?: Record<string, string> }) {
   const proto = use(loadPrototype(catalogById.get(catalogId)!)) // suspends until the model is ready
   const slots = slotsOf(catalogId, proto.object)
   const [open, setOpen] = useState<string | null>(slots[0]?.name ?? null)
 
   return (
     <section className="panel-section">
-      <h2>{name}</h2>
+      <h2>Colours</h2>
       {slots.length === 0 && <p className="panel-note">This item has no colours to change.</p>}
       <div className="slots">
         {slots.map((slot) => {

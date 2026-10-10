@@ -1,6 +1,6 @@
 import { Euler, Matrix4, Plane, Quaternion, Vector3, type Object3D, type Raycaster } from 'three'
 import { catalogById } from '../catalog/catalog'
-import { itemSizes } from '../catalog/models'
+import { sizeOfItem } from '../catalog/models'
 import { halfExtents, rectsOverlap, spansOverlap, type Size } from '../store/itemRules'
 import { useRoom, type PlacedItem, type WallSide } from '../store/roomStore'
 import { innerLength } from '../store/rules'
@@ -54,7 +54,7 @@ export function worldYaw(obj: Object3D) {
 /** Pointer ray → best spot for the carried item, plus whether it fits there. */
 export function solvePlacement(ray: Raycaster, carry: CarryItem): { candidate: Candidate; valid: boolean } | null {
   const entry = catalogById.get(carry.catalogId)
-  const size = itemSizes.get(carry.catalogId)
+  const size = sizeOfItem(carry)
   if (!entry || !size) return null
   const ignore = subtree(useRoom.getState().doc.items, carry.itemId)
 
@@ -65,7 +65,7 @@ export function solvePlacement(ray: Raycaster, carry: CarryItem): { candidate: C
     if (entry.mount === 'surface') c = onSurface(ray, size, carry.rot, ignore)
     c ??= onFloor(ray, size, carry.rot, entry.mount === 'ceiling' ? 'ceiling' : 'floor')
   }
-  return c && { candidate: c, valid: isValid(c, carry.catalogId, ignore) }
+  return c && { candidate: c, valid: isValid(c, carry, ignore) }
 }
 
 function onFloor(ray: Raycaster, size: Size, rot: number, kind: 'floor' | 'ceiling'): Candidate | null {
@@ -105,7 +105,7 @@ function onSurface(ray: Raycaster, size: Size, rot: number, ignore: Set<string>)
     n.copy(hit.face.normal).transformDirection(hit.object.matrixWorld)
     if (n.y < 0.7) continue
     const parentObj = itemObjects.get(owner.id)
-    const parentSize = itemSizes.get(owner.catalogId)
+    const parentSize = sizeOfItem(owner)
     if (!parentObj || !parentSize) continue
 
     // Work in the parent's own space, so a rotated desk still works
@@ -142,30 +142,39 @@ function onWall(ray: Raycaster, size: Size): Candidate | null {
   }
 }
 
-/** Does the item fit at this spot? `ignore` holds itself and anything on it. */
-export function isValid(c: Candidate, catalogId: string, ignore: Set<string>): boolean {
+/**
+ * Does the item (at its own size) fit at this spot? `ignore` holds itself and anything on it.
+ * Placing clamps spots into range already; resizing doesn't, so the bounds are checked here too.
+ */
+export function isValid(c: Candidate, item: Pick<PlacedItem, 'catalogId' | 'size'>, ignore: Set<string>): boolean {
   const { shell, items } = useRoom.getState().doc
-  const size = itemSizes.get(catalogId)
-  const entry = catalogById.get(catalogId)
+  const size = sizeOfItem(item)
+  const entry = catalogById.get(item.catalogId)
   if (!size || !entry) return false
+  const TOL = 1e-3
 
   if (c.kind === 'wall') {
     const [a0, a1, y0, y1] = [c.along - size.x / 2, c.along + size.x / 2, c.y, c.y + size.y]
+    if (Math.abs(c.along) + size.x / 2 > innerLength(shell, c.side) / 2 + TOL || y0 < -TOL || y1 > shell.height + TOL) return false
     const hitsOpening = shell.openings.some(
       (o) => o.wall === c.side && spansOverlap(a0, a1, o.offset - o.width / 2, o.offset + o.width / 2) && spansOverlap(y0, y1, o.sill, o.sill + o.height),
     )
     const hitsItem = items.some((it) => {
-      const s = !ignore.has(it.id) && it.wall?.side === c.side && !it.parentId ? itemSizes.get(it.catalogId) : undefined
+      const s = !ignore.has(it.id) && it.wall?.side === c.side && !it.parentId ? sizeOfItem(it) : undefined
       return !!s && spansOverlap(a0, a1, it.wall!.along - s.x / 2, it.wall!.along + s.x / 2) && spansOverlap(y0, y1, it.wall!.y, it.wall!.y + s.y)
     })
     return !hitsOpening && !hitsItem
   }
 
   const parentId = c.kind === 'surface' ? c.parentId : null
-  if (!parentId) {
-    // Placement clamps into the room already; rotating in place might not
-    const { hx, hz } = halfExtents(size, c.rot)
-    if (Math.abs(c.x) + hx > shell.width / 2 + 1e-3 || Math.abs(c.z) + hz > shell.depth / 2 + 1e-3) return false
+  const { hx, hz } = halfExtents(size, c.rot)
+  if (parentId) {
+    // Stay on the parent's top
+    const parent = items.find((it) => it.id === parentId)
+    const top = parent && sizeOfItem(parent)
+    if (!top || Math.abs(c.x) + hx > top.x / 2 + TOL || Math.abs(c.z) + hz > top.z / 2 + TOL) return false
+  } else if (Math.abs(c.x) + hx > shell.width / 2 + TOL || Math.abs(c.z) + hz > shell.depth / 2 + TOL || size.y > shell.height + TOL) {
+    return false
   }
   if (entry.flat) return true // rugs go under anything
 
@@ -177,7 +186,7 @@ export function isValid(c: Candidate, catalogId: string, ignore: Set<string>): b
   return !items.some((it) => {
     if (ignore.has(it.id) || it.wall || it.parentId !== parentId) return false
     const other = catalogById.get(it.catalogId)
-    const s = itemSizes.get(it.catalogId)
+    const s = sizeOfItem(it)
     if (!other || !s || other.flat) return false
     const [b0, b1] = range(!parentId && other.mount === 'ceiling' ? 'ceiling' : 'floor', s)
     return spansOverlap(y0, y1, b0, b1) && rectsOverlap(rect, { x: it.x, z: it.z, hw: s.x / 2, hd: s.z / 2, rot: it.rot })
@@ -210,7 +219,7 @@ export function candidateMatrix(c: Candidate, size: Size, out: Matrix4): boolean
   } else if (c.kind === 'surface') {
     const parent = itemObjects.get(c.parentId)
     const parentItem = useRoom.getState().doc.items.find((it) => it.id === c.parentId)
-    const parentSize = parentItem && itemSizes.get(parentItem.catalogId)
+    const parentSize = parentItem && sizeOfItem(parentItem)
     if (!parent || !parentSize) return false
     out.multiplyMatrices(m, parent.matrixWorld).multiply(local.compose(v.set(c.x, parentSize.y, c.z), q.setFromAxisAngle(UP, c.rot), ONE))
   } else {

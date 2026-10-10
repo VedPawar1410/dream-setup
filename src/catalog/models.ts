@@ -1,5 +1,7 @@
 import { Box3, BoxGeometry, Group, Mesh, MeshStandardMaterial, Vector3, type Material, type Object3D } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { scaled, type Size } from '../store/itemRules'
+import type { PlacedItem } from '../store/roomStore'
 import type { CatalogItem } from './catalog'
 import { buildProcedural } from './procedural'
 
@@ -12,6 +14,12 @@ export type Prototype = { object: Object3D; size: Vector3 }
 
 /** Real-world size per catalog id, filled in as models load. Collision rules read this. */
 export const itemSizes = new Map<string, Vector3>()
+
+/** A placed (or carried) item's real size: its model's size times its own resize. */
+export function sizeOfItem(item: Pick<PlacedItem, 'catalogId' | 'size'>): Size | undefined {
+  const base = itemSizes.get(item.catalogId)
+  return base && scaled(base, item.size)
+}
 
 const loader = new GLTFLoader()
 const prototypes = new Map<string, Promise<Prototype>>()

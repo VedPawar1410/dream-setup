@@ -4,15 +4,13 @@ import { useSettings } from '../store/settingsStore'
 // Short UI clips are Kenney's (CC0); the shutter, whooshes, rain and wind are synthesised
 // from noise, so they cost no downloads and can follow the weather continuously.
 
-export type Clip = 'click' | 'toggle' | 'switch' | 'pickup' | 'place' | 'rotate' | 'remove' | 'error' | 'open' | 'close' | 'confirm'
+export type Clip = 'click' | 'toggle' | 'switch' | 'rotate' | 'remove' | 'error' | 'open' | 'close' | 'confirm'
 
-// Several takes of a sound are picked at random, so placing ten chairs doesn't sound like a loop
+// Several takes of a sound can be listed; one is picked at random so repeats don't sound looped
 const FILES: Record<Clip, string[]> = {
   click: ['click'],
   toggle: ['toggle'],
   switch: ['switch'],
-  pickup: ['pickup'],
-  place: ['place1', 'place2', 'place3'],
   rotate: ['rotate'],
   remove: ['remove'],
   error: ['error'],
@@ -26,8 +24,6 @@ const VOLUME: Record<Clip, number> = {
   click: 0.25,
   toggle: 0.18,
   switch: 0.55,
-  pickup: 0.4,
-  place: 0.75,
   rotate: 0.3,
   remove: 0.35,
   error: 0.25,
@@ -150,6 +146,67 @@ function burst(at: number, freq: number, duration: number, volume: number) {
   src.connect(band).connect(gain).connect(master)
   src.start(at, Math.random() * 3)
   src.stop(at + duration + 0.02)
+}
+
+// A major pentatonic scale (in semitones): any two of its notes sound sweet together,
+// so random steps through it always make a pleasant little tune.
+const PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16]
+const ROOT = 587.33 // D5
+let step = 3
+
+/** A soft glassy note: a triangle wave plus a quiet octave sine for sparkle, fading out. */
+function bell(at: number, freq: number, volume: number) {
+  const c = ctx!
+  const gain = c.createGain()
+  gain.gain.setValueAtTime(0, at)
+  gain.gain.linearRampToValueAtTime(volume, at + 0.004)
+  gain.gain.exponentialRampToValueAtTime(0.001, at + 0.55)
+  gain.connect(master)
+  for (const [type, f, v] of [['triangle', freq, 1], ['sine', freq * 2, 0.25]] as const) {
+    const osc = c.createOscillator()
+    osc.type = type
+    osc.frequency.value = f
+    const g = c.createGain()
+    g.gain.value = v
+    osc.connect(g).connect(gain)
+    osc.start(at)
+    osc.stop(at + 0.6)
+  }
+}
+
+/** A round "bloop": a sine whose pitch slides from `from` to `to` with a quick fade. */
+function bloop(at: number, from: number, to: number, duration: number, volume: number) {
+  const c = ctx!
+  const osc = c.createOscillator()
+  osc.frequency.setValueAtTime(from, at)
+  osc.frequency.exponentialRampToValueAtTime(to, at + duration * 0.8)
+  const gain = c.createGain()
+  gain.gain.setValueAtTime(0, at)
+  gain.gain.linearRampToValueAtTime(volume, at + 0.006)
+  gain.gain.exponentialRampToValueAtTime(0.001, at + duration)
+  osc.connect(gain).connect(master)
+  osc.start(at)
+  osc.stop(at + duration + 0.02)
+}
+
+/**
+ * Setting something down: a bubbly pop, then two chime notes. Each drop wanders a step or
+ * two along the pentatonic scale, so decorating a room plays a tiny tune.
+ */
+export function plop() {
+  if (!ctx || !useSettings.getState().sound) return
+  const t = ctx.currentTime
+  bloop(t, 480, 170, 0.16, 0.32)
+  step = Math.min(PENTATONIC.length - 2, Math.max(0, step + (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 2))))
+  const note = (i: number) => ROOT * 2 ** (PENTATONIC[i] / 12)
+  bell(t + 0.035, note(step), 0.09)
+  bell(t + 0.11, note(step + 1), 0.07)
+}
+
+/** Picking something up: a little rising "boop". */
+export function boop() {
+  if (!ctx || !useSettings.getState().sound) return
+  bloop(ctx.currentTime, 300, 640, 0.13, 0.22)
 }
 
 /** A camera shutter: the blade opening, then closing a beat later, a little lower. */

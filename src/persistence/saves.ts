@@ -2,6 +2,7 @@ import { openDB, type DBSchema } from 'idb'
 import { create } from 'zustand'
 import { playRoomSwap } from '../anim/intro'
 import { resetView } from '../scene/camera'
+import { clearHistory } from '../store/history'
 import { defaultRoom, useRoom, type RoomDoc } from '../store/roomStore'
 import { useUi } from '../store/uiStore'
 import { migrate, parseRoomFile, type RoomFile } from './migrate'
@@ -102,6 +103,7 @@ export async function bootSaves() {
     applying = true
     useRoom.setState({ doc: migrate(rec.doc) })
     applying = false
+    clearHistory()
     useSaves.setState({ available: true, currentId: rec.id, name: rec.name, list: all.map(metaOf).reverse() })
     writeCurrent(rec.id)
   } catch (err) {
@@ -168,6 +170,7 @@ function apply(rec: SaveRecord) {
   applying = true
   useRoom.setState({ doc: migrate(rec.doc) })
   applying = false
+  clearHistory()
   useSaves.setState({ currentId: rec.id, name: rec.name })
   writeCurrent(rec.id)
   resetView()
