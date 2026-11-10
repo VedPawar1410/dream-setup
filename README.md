@@ -293,4 +293,8 @@ Put your own designs on things: a laptop lid, a TV or monitor, a tabletop, rugs 
 - [ ] `THREE.Clock` deprecation warning comes from React Three Fiber; goes away with an upstream update.
 
 ### Ideas parking lot
+- **AI room layout: "describe your room in words → Claude lays out the furniture".** You type something like "a cozy study with a big desk by the window and a reading corner", and Claude places the furniture.
+  - *How:* the Claude API with tool calls (for example `place_item`, `set_wall_finish`, `set_weather`) that map onto the existing store actions. Every proposed room goes through `migrate()` and the placement rules (`isValid`, `rectsOverlap`, `onFloor`), so a bad suggestion is rejected or corrected instead of breaking the scene. Errors go back to Claude so it can fix its own layout.
+  - *Catch to plan for:* the site is static, so the API key can't live in the browser. It needs a small server-side piece, such as a Supabase Edge Function, plus a per-user rate limit, because each request costs money.
+  - *Why it's worth it:* it would make Roomlet show AI and agent skills (tool use, validating model output against real rules), not only frontend work.
 - More ideas will come as the project grows; add them here before planning them.
