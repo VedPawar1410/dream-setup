@@ -4,48 +4,46 @@
    point of use. Changing a channel re-themes every tint, glow and border at once.
    Literal colours left in rules are deliberate: pure white/black highlights, the
    colour picker's own gradients, the RGB rainbow, and the vinyl record drawing.
-   (index.html's splash and SharePanel's canvas card can't read CSS variables;
-   keep their colours in step with these.) */
+   The splash (index.html) paints before this file loads and the 3D scene uses
+   three.js colours (scene/dimensions.ts, scene/atmosphere.ts), so those keep
+   their own copies; SharePanel reads these variables at runtime. */
 :root {
   /* Base channels */
-  --bg-rgb: 23 18 31;
-  --panel-rgb: 27 21 37;
-  --scrim-rgb: 10 8 16;
-  --accent-rgb: 177 140 255;
+  --bg-rgb: 26 20 17; /* espresso */
+  --panel-rgb: 31 24 20;
+  --scrim-rgb: 12 9 7;
+  --accent-rgb: 255 179 107; /* apricot */
   --light-rgb: 255 255 255; /* white overlays on glass */
   --shadow-rgb: 0 0 0;
-  --danger-rgb: 255 107 129;
-  --success-rgb: 127 217 168;
+  --danger-rgb: 255 107 107;
+  --success-rgb: 159 199 154; /* sage */
 
   /* Surfaces and text */
   --bg: rgb(var(--bg-rgb));
-  --ink: #f4eefc;
-  --ink-dim: #a99bbd;
-  --ink-on-accent: #1b1622;
+  --ink: #fbf1e6;
+  --ink-dim: #bba895;
+  --ink-on-accent: #2a1a0c;
   --glass: rgb(var(--light-rgb) / 0.07);
   --glass-border: rgb(var(--light-rgb) / 0.12);
 
   /* Brand */
   --accent: rgb(var(--accent-rgb));
-  --accent-2: #ff8fb1;
-  --accent-3: #ffd27a;
-  --accent-deep: #7c5cd6;
+  --accent-2: #f2876b; /* terracotta */
+  --accent-3: #9fc79a; /* sage */
+  --accent-deep: #b4561f; /* apricot dark enough for white text */
 
-  /* Status text. The three danger pinks drifted apart over time; step 3 merges them. */
-  --danger-ink: #ff9aa9;
-  --danger-ink-soft: #ffb3bf;
-  --danger-ink-alt: #ff9db5;
-  --success-ink: #10301f;
+  /* Status text */
+  --danger-ink: #ff9a8f;
+  --success-ink: #17301a;
 
   /* Photo paper (the polaroid preview) */
   --paper: #fbf8f2;
-  --paper-ink: #2a2235;
-  --paper-ink-dim: #3b3346;
+  --paper-ink: #2b211a;
+  --paper-ink-dim: #4a3d33;
 
-  /* Gradients. The two "stage" backdrops are near-duplicates; step 3 merges them. */
+  /* Gradients (the splash in index.html and the 3D backdrop in atmosphere.ts match --gradient-stage) */
   --gradient-brand: linear-gradient(135deg, var(--accent), var(--accent-2));
-  --gradient-stage: radial-gradient(circle at 50% 45%, #3d3352, var(--bg));
-  --gradient-stage-alt: radial-gradient(circle at 50% 40%, #3a3050, #1d1728);
+  --gradient-stage: radial-gradient(circle at 50% 45%, #3a2c22, var(--bg));
 
   /* Motion */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -1194,7 +1192,7 @@ kbd {
 }
 
 .sel-btn.lit svg {
-  stroke: var(--accent-3);
+  stroke: var(--accent);
 }
 
 @media (max-width: 900px) {
@@ -1357,7 +1355,7 @@ kbd {
   padding: 9px 12px;
   border-radius: 10px;
   background: rgb(var(--danger-rgb) / 0.12);
-  color: var(--danger-ink-soft);
+  color: var(--danger-ink);
   font-size: 13px;
 }
 
@@ -1494,7 +1492,7 @@ kbd {
 .confirm-text {
   margin-right: 4px;
   font-size: 12px;
-  color: var(--danger-ink-soft);
+  color: var(--danger-ink);
 }
 
 .room-switch:focus-visible,
@@ -2252,7 +2250,7 @@ kbd {
 }
 
 .danger-pill {
-  color: var(--danger-ink-alt);
+  color: var(--danger-ink);
 }
 
 .share-off {
@@ -2347,7 +2345,7 @@ kbd {
   border-radius: 50%;
   background:
     radial-gradient(circle, transparent 0 30%, rgb(var(--light-rgb) / 0.05) 31% 32%, transparent 33%),
-    repeating-radial-gradient(circle, #19151f 0 2px, #231e2c 2px 3px);
+    repeating-radial-gradient(circle, #1d1612 0 2px, #2a201a 2px 3px);
   box-shadow: 0 6px 18px rgb(var(--shadow-rgb) / 0.5);
 }
 
@@ -2569,7 +2567,7 @@ kbd {
   height: 180px;
   border-radius: 16px;
   overflow: hidden;
-  background: var(--gradient-stage-alt);
+  background: var(--gradient-stage);
 }
 
 .item-preview img {
@@ -2645,7 +2643,7 @@ kbd {
   place-items: center;
   border-radius: 50%;
   background: rgb(var(--bg-rgb) / 0.85);
-  color: var(--danger-ink-alt);
+  color: var(--danger-ink);
   font-size: 15px;
   line-height: 1;
   opacity: 0;

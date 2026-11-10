@@ -147,8 +147,8 @@ function music(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const gap = 4
   const bw = (w - 40 - gap * (n - 1)) / n
   const bar = ctx.createLinearGradient(0, h, 0, h * 0.25)
-  bar.addColorStop(0, '#b18cff')
-  bar.addColorStop(1, '#ff8fb1')
+  bar.addColorStop(0, '#ffb36b')
+  bar.addColorStop(1, '#f2876b')
   ctx.fillStyle = bar
   for (let i = 0; i < n; i++) {
     const bh = Math.max(3, bars[i] * h * 0.6)

@@ -15,7 +15,7 @@ import { OpeningView, type WallPointer } from './Openings'
 import { clippedRaycast, noRaycast, room, wallCut, wallGroups, wallMeshes } from './sceneRefs'
 import { buildWallGeometry, outlineShape, solidSpans } from './wallGeometry'
 
-const BASE_COLOR = '#2a2235' // diorama plinth, also used for wall cut faces
+const BASE_COLOR = '#2b211a' // diorama plinth, also used for wall cut faces
 const CUT_HEIGHT = 0.16 // how tall a cut-away wall stays
 const SKIRTING_H = 0.08
 

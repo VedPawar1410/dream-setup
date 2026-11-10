@@ -35,14 +35,14 @@ export const PRESETS: Record<Weather, Values> = {
   sunny: {
     sunColor: c('#ffe2b8'), sunIntensity: 3.4, sunPos: v(3.5, 6.5, -7),
     hemiSky: c('#dfe8ff'), hemiGround: c('#7a5c48'), hemiIntensity: 0.9, fill: 2.5, env: 0.45,
-    bgInner: c('#3d3352'), bgOuter: c('#17121f'),
+    bgInner: c('#3a2c22'), bgOuter: c('#1a1411'),
     skyTop: c('#5ea8ff'), skyBottom: c('#cfe8ff'), hillsFar: c('#88b48f'), hills: c('#4f8a5b'),
     disc: c('#fff6d8'), discY: 0.82, stars: 0, rain: 0, snow: 0, viewGlow: 1.2, lamps: 0.35,
   },
   sunset: {
     sunColor: c('#ff9a5c'), sunIntensity: 2.6, sunPos: v(-5, 2.6, -7),
     hemiSky: c('#ffb98f'), hemiGround: c('#5a3f52'), hemiIntensity: 0.65, fill: 2.2, env: 0.35,
-    bgInner: c('#5c3a57'), bgOuter: c('#1d1220'),
+    bgInner: c('#5a3a33'), bgOuter: c('#1e1311'),
     skyTop: c('#4b3a8a'), skyBottom: c('#ff9e6b'), hillsFar: c('#7a4a6b'), hills: c('#3d2a4d'),
     disc: c('#ffd27a'), discY: 0.4, stars: 0.15, rain: 0, snow: 0, viewGlow: 1.1, lamps: 0.6,
   },

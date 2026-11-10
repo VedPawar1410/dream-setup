@@ -1,12 +1,10 @@
-# Dream Setup
+# Roomlet
 
-A cozy browser sandbox for designing your dream room and desk setup, inspired by
-[My Dream Setup](https://store.steampowered.com/app/2200780/My_Dream_Setup/).
+A cozy browser sandbox for designing your dream room and desk setup (formerly *Dream Setup*).
 Built with [three.js](https://threejs.org) and [GSAP](https://gsap.com).
 
-**Status:** v1 and v2 complete: editing upgrades, accounts and cloud saves, share links, the living desk, themed packs, your own scanned items, and L-shaped / two-room layouts. See [PLAN.md](PLAN.md) for the roadmap; model, sound and music credits are in [CREDITS.md](CREDITS.md).
+**Status:** v1 and v2 complete: editing upgrades, accounts and cloud saves, share links, the living desk, themed packs, your own scanned items, and L-shaped / two-room layouts. A revive pass (backend keep-alive, design tokens, the Sunroom look) is in progress. See [PLAN.md](PLAN.md) for the roadmap; model, sound and music credits are in [CREDITS.md](CREDITS.md).
 **Play:** https://vedpawar1410.github.io/dream-setup/
-
 ## Controls
 | Input | Action |
 |---|---|

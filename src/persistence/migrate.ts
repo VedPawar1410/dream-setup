@@ -28,7 +28,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 
 export class NotARoomError extends Error {
   constructor() {
-    super("This file isn't a Dream Setup room.")
+    super("This file isn't a Roomlet room.")
   }
 }
 
