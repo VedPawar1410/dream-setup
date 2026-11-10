@@ -1,4 +1,5 @@
 import { PerformanceMonitor } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import { useEffect, useState } from 'react'
 import { sceneReady } from '../anim/intro'
 import { useSettings } from '../store/settingsStore'
@@ -6,6 +7,7 @@ import Background from './Background'
 import Blueprint from './Blueprint'
 import CameraRig from './CameraRig'
 import Lighting from './Lighting'
+import { pulseSelected } from './looks'
 import PhoneFraming from './PhoneFraming'
 import PhotoFocus from './PhotoFocus'
 import PostFX from './PostFX'
@@ -38,6 +40,11 @@ function AutoQuality() {
   )
 }
 
+function SelectionPulse() {
+  useFrame(({ clock }) => pulseSelected(clock.elapsedTime))
+  return null
+}
+
 export default function Experience() {
   return (
     <>
@@ -49,6 +56,7 @@ export default function Experience() {
       <Blueprint />
       <CameraRig />
       <PhoneFraming />
+      <SelectionPulse />
       <PostFX />
       <PhotoFocus />
     </>

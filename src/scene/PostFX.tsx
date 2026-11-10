@@ -54,8 +54,11 @@ export default function PostFX() {
           that makes a room look grounded */}
       {/* The priciest pass after resolution itself, so the low tier drops it */}
       {high && <N8AO halfRes quality="medium" aoRadius={0.5} distanceFalloff={0.6} intensity={2.2} />}
-      {/* Depth of field is an expensive extra pass, so it only exists in photo mode */}
-      {photo && <DepthOfField ref={dof} target={focusPoint} focalLength={0.03} bokehScale={0} />}
+      {/* Depth of field is an expensive extra pass, so it only exists in photo mode.
+          focusRange is in metres: things within ~2.5 m of the focus point stay sharp and
+          blur grows beyond that. (The old focalLength={0.03} meant 3% of the depth range
+          in an earlier postprocessing; now it's an alias for 3 cm, which blurred everything.) */}
+      {photo && <DepthOfField ref={dof} target={focusPoint} focusRange={2.5} bokehScale={0} />}
       {/* Threshold 1: only HDR emissives bloom (RGB strips, screens, lamps) */}
       <Bloom mipmapBlur luminanceThreshold={1} intensity={0.6} />
       {/* EffectComposer turns off the renderer's own tone mapping, so it must happen here.

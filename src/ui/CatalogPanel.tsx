@@ -14,11 +14,26 @@ export default function CatalogPanel() {
   const [category, setCategory] = useState<Category>('desk')
   const [query, setQuery] = useState('')
   const panel = useRef<HTMLElement>(null)
+  // Which edges of the category row have more chips hidden past them (drives the fades)
+  const chips = useRef<HTMLElement>(null)
+  const [more, setMore] = useState('')
+  const updateMore = () => {
+    const el = chips.current
+    if (!el) return
+    const left = el.scrollLeft > 2
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 2
+    setMore(left && right ? 'both' : left ? 'left' : right ? 'right' : '')
+  }
 
   const account = useAuth((s) => s.account)
   const mine = useMyItems((s) => s.items)
   const [mineError, setMineError] = useState<string | null>(null)
   const q = query.trim().toLowerCase()
+  useEffect(() => {
+    updateMore()
+    addEventListener('resize', updateMore)
+    return () => removeEventListener('resize', updateMore)
+  }, [mode, q])
   const items = useMemo(() => {
     const own = mine.map((m) => catalogById.get(m.catalogId)).filter((it): it is CatalogItem => !!it)
     if (q) return [...own, ...CATALOG].filter((it) => it.name.toLowerCase().includes(q))
@@ -61,9 +76,27 @@ export default function CatalogPanel() {
       </div>
       <input className="search" type="search" placeholder="Search furniture…" value={query} onChange={(e) => setQuery(e.target.value)} />
       {!q && (
-        <nav className="chips" aria-label="Categories">
+        <nav
+          className="chips"
+          aria-label="Categories"
+          ref={chips}
+          data-more={more}
+          onScroll={updateMore}
+          // A mouse wheel scrolls vertically; turn that into sideways scrolling here
+          onWheel={(e) => {
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY
+          }}
+        >
           {CATEGORIES.map((c) => (
-            <button key={c.id} className={`chip${c.id === category ? ' active' : ''}`} data-sound="toggle" onClick={() => setCategory(c.id)}>
+            <button
+              key={c.id}
+              className={`chip${c.id === category ? ' active' : ''}`}
+              data-sound="toggle"
+              onClick={(e) => {
+                setCategory(c.id)
+                e.currentTarget.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' })
+              }}
+            >
               {c.label}
             </button>
           ))}
