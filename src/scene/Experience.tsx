@@ -12,6 +12,7 @@ import PhoneFraming from './PhoneFraming'
 import PhotoFocus from './PhotoFocus'
 import PostFX from './PostFX'
 import RoomShell from './RoomShell'
+import WarmUp from './WarmUp'
 import Weather from './Weather'
 
 const setAutoTier = (tier: 'high' | 'low') => useSettings.setState({ autoTier: tier })
@@ -57,6 +58,7 @@ export default function Experience() {
       <CameraRig />
       <PhoneFraming />
       <SelectionPulse />
+      <WarmUp />
       <PostFX />
       <PhotoFocus />
     </>

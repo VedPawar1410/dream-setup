@@ -40,8 +40,9 @@ async function pump() {
     } catch (err) {
       console.error(`Thumbnail failed for ${item.id}`, err)
     }
-    // One thumbnail per frame, so opening the catalog never stalls the main scene
-    await new Promise((resolve) => requestAnimationFrame(resolve))
+    // One thumbnail at a time, in the browser's idle time between frames, so rendering
+    // them never makes the main scene skip a frame (Safari lacks requestIdleCallback)
+    await new Promise((resolve) => ('requestIdleCallback' in window ? requestIdleCallback(resolve, { timeout: 200 }) : setTimeout(resolve, 16)))
   }
   pumping = false
 }
