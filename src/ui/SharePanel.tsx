@@ -86,7 +86,7 @@ function ShareSheet({ id, name, token }: { id: string; name: string; token: stri
           <QrCode url={url} name={name} />
           <div className="share-actions">
             {'share' in navigator && (
-              <button className="pill-btn" onClick={() => void navigator.share({ title: `${name} · Dream Setup`, url }).catch(() => {})}>
+              <button className="pill-btn" onClick={() => void navigator.share({ title: `${name} · Roomlet`, url }).catch(() => {})}>
                 Share…
               </button>
             )}
@@ -134,12 +134,17 @@ export function QrCode({ url, name, caption = 'Scan with a phone camera to open 
       const size = (n + quiet * 2) * cell
       c.width = c.height = size
       const g = c.getContext('2d')!
-      g.fillStyle = '#f7f2fd'
+      // Colours come from the CSS design tokens, so the card follows the theme
+      const css = getComputedStyle(document.documentElement)
+      const paper = css.getPropertyValue('--paper').trim()
+      const ink = css.getPropertyValue('--paper-ink').trim()
+      const brand = css.getPropertyValue('--accent-deep').trim()
+      g.fillStyle = paper
       g.fillRect(0, 0, size, size)
       // The three corner "finder" squares are drawn whole, so they stay crisp and on-brand
       const finder = (r: number, col: number) => r < 7 && col < 7
       const isFinder = (r: number, col: number) => finder(r, col) || finder(r, n - 1 - col) || finder(n - 1 - r, col)
-      g.fillStyle = '#2a2235'
+      g.fillStyle = ink
       for (let r = 0; r < n; r++) {
         for (let col = 0; col < n; col++) {
           if (!qr.isDark(r, col) || isFinder(r, col)) continue
@@ -155,15 +160,15 @@ export function QrCode({ url, name, caption = 'Scan with a phone camera to open 
       ]) {
         const x = (col + quiet) * cell
         const y = (r + quiet) * cell
-        g.fillStyle = '#7d5bd6'
+        g.fillStyle = brand
         g.beginPath()
         g.roundRect(x, y, cell * 7, cell * 7, cell * 1.6)
         g.fill()
-        g.fillStyle = '#f7f2fd'
+        g.fillStyle = paper
         g.beginPath()
         g.roundRect(x + cell, y + cell, cell * 5, cell * 5, cell * 1.1)
         g.fill()
-        g.fillStyle = '#2a2235'
+        g.fillStyle = ink
         g.beginPath()
         g.roundRect(x + cell * 2, y + cell * 2, cell * 3, cell * 3, cell * 0.8)
         g.fill()

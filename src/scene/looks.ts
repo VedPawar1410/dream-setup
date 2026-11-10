@@ -1,13 +1,14 @@
 import { Color, type Material, type Mesh, type MeshStandardMaterial, type Object3D } from 'three'
+import { ACCENT } from './dimensions'
 
 export type Look = 'normal' | 'hover' | 'selected' | 'ghost' | 'ghost-bad'
 
 // Highlights are an emissive tint (the material glows faintly), so they work on any
 // model without an outline pass. Ghosts are see-through as well.
 const TINT: Record<Exclude<Look, 'normal'>, Color> = {
-  hover: new Color('#b18cff').multiplyScalar(0.14),
-  selected: new Color('#b18cff').multiplyScalar(0.32),
-  ghost: new Color('#b18cff').multiplyScalar(0.4),
+  hover: new Color(ACCENT).multiplyScalar(0.14),
+  selected: new Color(ACCENT).multiplyScalar(0.32),
+  ghost: new Color(ACCENT).multiplyScalar(0.4),
   'ghost-bad': new Color('#ff6b81').multiplyScalar(0.55),
 }
 

@@ -161,7 +161,7 @@ export default function Hud() {
     <div className="hud" ref={root}>
       <header className="topbar">
         <div>
-          <h1 className="title">Dream Setup</h1>
+          <h1 className="title">Roomlet</h1>
           {viewing ? (
             <ViewingBar viewing={viewing} />
           ) : (

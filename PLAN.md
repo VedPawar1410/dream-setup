@@ -1,7 +1,8 @@
-# Dream Setup — Build Plan
+# Roomlet (formerly Dream Setup) — Build Plan
 
-A browser remake of **My Dream Setup** (Campfire Studio, 2023): a relaxed, goal-free sandbox for
-designing your ideal room / desk setup. Built with **three.js** and **GSAP**.
+A relaxed, goal-free sandbox for designing your ideal room / desk setup. The v1 plan below was
+researched by studying **My Dream Setup** (Campfire Studio, 2023) and its reviews; Roomlet has its
+own name, look and CC0 assets. Built with **three.js** and **GSAP**.
 
 ---
 

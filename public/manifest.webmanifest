@@ -1,13 +1,13 @@
 {
-  "name": "Dream Setup",
-  "short_name": "Dream Setup",
+  "name": "Roomlet",
+  "short_name": "Roomlet",
   "description": "Design your dream room and desk setup.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#17121f",
-  "theme_color": "#1b1622",
+  "background_color": "#1a1411",
+  "theme_color": "#1a1411",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
