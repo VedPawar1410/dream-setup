@@ -1,0 +1,35 @@
+name: Keep Supabase awake
+
+# Supabase's free tier pauses a project after about a week with no traffic, which
+# silently breaks sign-in, cloud saves, share links and "My items" on the live site.
+# Twice a week this makes one tiny database read, so the project never goes idle.
+# If the request fails (project paused or down), the run fails and GitHub emails you.
+#
+# Note: GitHub turns off scheduled workflows in a repo with no commits for 60 days.
+# It emails a warning first; re-enable it under Actions → Keep Supabase awake.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1,4' # Mondays and Thursdays, 06:00 UTC (gaps of 3-4 days, well under 7)
+  workflow_dispatch: # lets you run it by hand from the Actions tab
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read one row from the database
+        env:
+          # The same public values that ship in the app bundle (src/backend/config.ts).
+          # Row-level security means this key can't read anyone's rooms: the query runs
+          # in Postgres (that's what counts as activity) and returns an empty list.
+          SUPABASE_URL: https://actysaapmpoxcjjwtdiz.supabase.co
+          SUPABASE_KEY: sb_publishable_zkuRjXmNiBy-VPhE9GZkoQ_FjWfHLz-
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 30 \
+            --retry 3 --retry-delay 10 --retry-all-errors \
+            -H "apikey: $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/rooms?select=id&limit=1"
+          echo
+          echo "Supabase is awake."
