@@ -23,6 +23,7 @@ import RoomsPanel from './RoomsPanel'
 import SelectionBar from './SelectionBar'
 import SharePanel, { ViewingBar } from './SharePanel'
 import SettingsMenu from './SettingsMenu'
+import SheetTabs from './SheetTabs'
 import Tour from './Tour'
 import WeatherDock from './WeatherDock'
 
@@ -81,6 +82,8 @@ const STATUS = { saved: 'Saved', saving: 'Saving…', error: 'Not saved' }
 export default function Hud() {
   const root = useRef<HTMLDivElement>(null)
   const mode = useUi((s) => s.mode)
+  const sheet = useUi((s) => s.sheet)
+  const placing = useUi((s) => s.carryItem !== null)
   const roomName = useSaves((s) => s.name)
   const status = useSaves((s) => (s.available ? s.status : null))
   const firstPerson = useUi((s) => s.firstPerson)
@@ -158,7 +161,7 @@ export default function Hud() {
   )
 
   return (
-    <div className="hud" ref={root}>
+    <div className="hud" ref={root} data-sheet={sheet ?? 'none'} data-placing={placing || undefined}>
       <header className="topbar">
         <div>
           <h1 className="title">Roomlet</h1>
@@ -183,6 +186,7 @@ export default function Hud() {
       <CatalogPanel />
       <Inspector />
       <SelectionBar />
+      <SheetTabs />
       <RoomsPanel />
       <SharePanel />
       <AuthPanel />
@@ -213,13 +217,13 @@ export default function Hud() {
               </button>
             </div>
           )}
-          <button className="icon-btn" onClick={() => rotateQuarter(-1)} aria-label="Turn left (Q)" title="Turn left (Q)">
+          <button className="icon-btn turn-btn" onClick={() => rotateQuarter(-1)} aria-label="Turn left (Q)" title="Turn left (Q)">
             <svg viewBox="0 0 24 24"><path d="M9 6H4v5M4.5 10.5A8 8 0 1 1 6 17" /></svg>
           </button>
           <button className="icon-btn" onClick={resetView} aria-label="Reset view (R)" title="Reset view (R)">
             <svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7M5 9.5V20h14V9.5" /></svg>
           </button>
-          <button className="icon-btn" onClick={() => rotateQuarter(1)} aria-label="Turn right (E)" title="Turn right (E)">
+          <button className="icon-btn turn-btn" onClick={() => rotateQuarter(1)} aria-label="Turn right (E)" title="Turn right (E)">
             <svg viewBox="0 0 24 24"><path d="M15 6h5v5M19.5 10.5A8 8 0 1 0 18 17" /></svg>
           </button>
           <button className={`icon-btn${firstPerson ? ' on' : ''}`} data-sound="none" onClick={toggleFirstPerson} aria-label="Sit at your desk (F)" title={firstPerson ? 'Stand up (F)' : 'Sit at your desk (F)'}>

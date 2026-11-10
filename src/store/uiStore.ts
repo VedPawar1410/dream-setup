@@ -50,6 +50,8 @@ type UiState = {
   shareOpen: string | null
   /** The "add your own item" panel. */
   addItemOpen: boolean
+  /** Phones only: which decorate panel the bottom sheet shows (null = collapsed). */
+  sheet: 'catalog' | 'inspector' | null
 }
 
 export type Viewing = { owner: string; name: string } | { missing: true }
@@ -76,4 +78,5 @@ export const useUi = create<UiState>(() => ({
   viewing: null,
   shareOpen: null,
   addItemOpen: false,
+  sheet: 'catalog',
 }))
