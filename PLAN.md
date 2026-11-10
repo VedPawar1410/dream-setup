@@ -171,3 +171,11 @@ phone-scan upload for your own objects, bundled royalty-free lo-fi music.
   material edits in the optimisation step.
 - **Asset licences:** use only CC0 models (Poly Pizza mixes CC0 and CC-BY), recorded in `CREDITS.md`.
 - **Scope creep:** the original has 2,000+ items. Aim for about 60–100 good items in v1.
+
+---
+
+## 7. After v2
+v1 and v2 are complete, and the November 2026 revive (keep-alive, design tokens, Roomlet rename,
+phone layout, smoothness, tests) is recorded in the README learning log. Everything planned or
+noticed but not built yet, including the **Designs** feature (v3), lives in
+[README → Roadmap, ideas and to-dos](README.md#roadmap-ideas-and-to-dos).
