@@ -6,6 +6,7 @@ import Background from './Background'
 import Blueprint from './Blueprint'
 import CameraRig from './CameraRig'
 import Lighting from './Lighting'
+import PhoneFraming from './PhoneFraming'
 import PhotoFocus from './PhotoFocus'
 import PostFX from './PostFX'
 import RoomShell from './RoomShell'
@@ -47,6 +48,7 @@ export default function Experience() {
       <Weather />
       <Blueprint />
       <CameraRig />
+      <PhoneFraming />
       <PostFX />
       <PhotoFocus />
     </>
