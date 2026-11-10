@@ -80,7 +80,7 @@ const openRooms = () => {
 const STATUS = { saved: 'Saved', saving: 'Saving…', error: 'Not saved' }
 
 export default function Hud() {
-  const root = useRef<HTMLDivElement>(null)
+  const root = useRef<HTMLElement>(null)
   const mode = useUi((s) => s.mode)
   const sheet = useUi((s) => s.sheet)
   const placing = useUi((s) => s.carryItem !== null)
@@ -161,7 +161,7 @@ export default function Hud() {
   )
 
   return (
-    <div className="hud" ref={root} data-sheet={sheet ?? 'none'} data-placing={placing || undefined}>
+    <main className="hud" ref={root} data-sheet={sheet ?? 'none'} data-placing={placing || undefined}>
       <header className="topbar">
         <div>
           <h1 className="title">Roomlet</h1>
@@ -236,6 +236,6 @@ export default function Hud() {
           <SettingsMenu />
         </div>
       </div>
-    </div>
+    </main>
   )
 }
