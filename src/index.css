@@ -556,6 +556,17 @@ kbd {
   flex: none;
   padding-bottom: 2px;
   scrollbar-width: none;
+  --fade: 28px;
+}
+/* Fade whichever edge has more chips past it, so the row reads as scrollable */
+.chips[data-more='right'] {
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--fade)), transparent);
+}
+.chips[data-more='left'] {
+  mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
+}
+.chips[data-more='both'] {
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
 }
 
 .chip {
